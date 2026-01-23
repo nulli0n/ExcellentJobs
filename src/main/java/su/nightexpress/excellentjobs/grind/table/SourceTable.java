@@ -80,7 +80,11 @@ public class SourceTable implements Writeable {
             return defValue == null ? reward : reward.add(defValue.roll());
         }
 
-        rewards.forEach(other -> reward.add(other.roll()));
+        rewards.forEach(other -> {
+            if (other.checkChance()) {
+                reward.add(other.roll());
+            }
+        });
 
         return reward;
     }
@@ -95,13 +99,20 @@ public class SourceTable implements Writeable {
             return defValue == null ? reward : reward.add(defValue.roll());
         }
 
-        return sourceReward.roll();
+        if (sourceReward.checkChance()) {
+            return sourceReward.roll();
+        }
+        return reward;
     }
 
     @NotNull
     public <O> GrindReward rollForEntity(@NotNull O entity, @NotNull GrindAdapterFamily<O> family) {
         GrindReward reward = new GrindReward();
-        this.getEntries(entity, family).forEach(other -> reward.add(other.roll()));
+        this.getEntries(entity, family).forEach(other -> {
+            if (other.checkChance()) {
+                reward.add(other.roll());
+            }
+        });
         return reward;
     }
 
