@@ -83,6 +83,7 @@ public class BaseCommands {
                     CommandArguments.forJob(plugin),
                     CommandArguments.forJobState(plugin)
                 )
+                .withFlags(CommandFlags.SILENT)
                 .executes((context, arguments) -> setState(plugin, context, arguments))
             )
             .branch(Commands.literal("stats")
@@ -196,10 +197,12 @@ public class BaseCommands {
             jobData.update();
             plugin.getUserManager().save(user);
 
-            Lang.COMMAND_SET_STATE_DONE.message().send(context.getSender(),  replacer -> replacer
-                .replace(Placeholders.GENERIC_STATE, Lang.JOB_STATE.getLocalized(state))
-                .replace(Placeholders.PLAYER_NAME, user.getName())
-                .replace(job.replacePlaceholders()));
+            if (!context.hasFlag(CommandFlags.SILENT)) {
+                Lang.COMMAND_SET_STATE_DONE.message().send(context.getSender(), replacer -> replacer
+                    .replace(Placeholders.GENERIC_STATE, Lang.JOB_STATE.getLocalized(state))
+                    .replace(Placeholders.PLAYER_NAME, user.getName())
+                    .replace(job.replacePlaceholders()));
+            }
         });
         return true;
     }
