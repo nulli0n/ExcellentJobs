@@ -38,6 +38,7 @@ Job:
       Entry:
         Job: <lyellow><b>%job_name%</b> <hover:show_text:'%currency%'>[<lgreen>Detalles</lgreen>]</hover></lyellow>
         Currency: <lgreen>%amount%</lgreen>
+    DebitInsufficient: <lgray>Las recompensas de <lred>%job_name%</lred> no están disponibles temporalmente: la cuenta de pago no tiene fondos suficientes.</lgray>
   XP:
     Gain: <lgray>Has obtenido <lyellow>%amount% EXP</lyellow> por el trabajo de <lyellow>%job_name%</lyellow>.</lgray>
     Lose: <lgray>Has perdido<lred>%amount% EXP</lred> del trabajo de <lred>%job_name%</lred>.</lgray>

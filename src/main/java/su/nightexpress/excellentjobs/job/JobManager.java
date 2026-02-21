@@ -40,6 +40,9 @@ import su.nightexpress.nightcore.util.time.TimeFormatType;
 import su.nightexpress.nightcore.util.time.TimeFormats;
 import su.nightexpress.nightcore.util.wrapper.UniDouble;
 import su.nightexpress.nightcore.util.wrapper.UniInt;
+import su.nightexpress.nightcore.integration.currency.EconomyBridge;
+import su.nightexpress.nightcore.integration.currency.CurrencyId;
+import su.nightexpress.nightcore.bridge.currency.Currency;
 
 import java.io.File;
 import java.io.IOException;
@@ -583,6 +586,20 @@ public class JobManager extends AbstractManager<JobsPlugin> {
         JobPaymentEvent event = new JobPaymentEvent(player, job, income);
         this.plugin.getPluginManager().callEvent(event);
         if (event.isCancelled()) return false;
+
+        // Pre-check: when NightCore Vault debit account is set, ensure it has enough balance before paying.
+        Currency vaultCurrency = EconomyBridge.getCurrency(CurrencyId.VAULT);
+        if (vaultCurrency != null) {
+            double vaultAmount = income.getCurrencyMap().getOrDefault(vaultCurrency, 0D);
+            if (vaultAmount > 0) {
+                Optional<UUID> debitId = EconomyBridge.getVaultDebitAccountId();
+                if (debitId.isPresent() && !EconomyBridge.hasEnough(debitId.get(), CurrencyId.VAULT, vaultAmount)) {
+                    Lang.JOB_PAYMENT_DEBIT_INSUFFICIENT.message().send(player, replacer -> replacer.replace(data.replaceAllPlaceholders()));
+                    income.clear();
+                    return false;
+                }
+            }
+        }
 
         // Send message only for scheduled payments.
         if (!Config.isInstantPayment()) {
