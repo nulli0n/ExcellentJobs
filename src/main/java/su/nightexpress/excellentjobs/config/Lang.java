@@ -201,6 +201,10 @@ public class Lang implements LangContainer {
         GRAY.wrap(GREEN.wrap("[$]") + " You got paid for the " + WHITE.wrap(JOB_NAME) + "'s work: " + GREEN.wrap(GENERIC_AMOUNT))
     );
 
+    public static final MessageLocale JOB_PAYMENT_DEBIT_INSUFFICIENT = LangEntry.builder("Job.Payment.DebitInsufficient").chatMessage(
+        GRAY.wrap("Rewards for " + RED.wrap(JOB_NAME) + " are temporarily unavailable – the payment account has insufficient funds.")
+    );
+
     public static final MessageLocale JOB_XP_GAIN = LangEntry.builder("Job.XP.Gain").chatMessage(
         GRAY.wrap("You gain " + YELLOW.wrap(GENERIC_AMOUNT + " XP") + " for " + YELLOW.wrap(JOB_NAME) + " job.")
     );
