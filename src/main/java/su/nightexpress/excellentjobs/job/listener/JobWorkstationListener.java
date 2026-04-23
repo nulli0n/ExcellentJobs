@@ -1,5 +1,6 @@
 package su.nightexpress.excellentjobs.job.listener;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.TileState;
 import org.bukkit.entity.Player;
@@ -72,9 +73,9 @@ public class JobWorkstationListener extends AbstractListener<JobsPlugin> {
     }
 
     private void modifyStandNextTick(@NotNull Workstation workstation, @NotNull Consumer<TileState> consumer) {
-        this.plugin.runTask(() -> {
-            if (!(workstation.getBackend().getLocation().getBlock().getState() instanceof TileState tickedStation)) return;
-
+        Location location = workstation.getBackend().getLocation();
+        this.plugin.runTask(location, () -> {
+            if (!(location.getBlock().getState() instanceof TileState tickedStation)) return;
             consumer.accept(tickedStation);
             tickedStation.update(true, false);
         });

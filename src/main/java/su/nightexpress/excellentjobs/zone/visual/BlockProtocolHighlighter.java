@@ -5,7 +5,6 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.*;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
@@ -29,7 +28,7 @@ public class BlockProtocolHighlighter extends BlockHighlighter {
     }
 
     @Override
-    protected void spawnVisualBlock(int entityID, @NotNull Player player, @NotNull Location location, @NotNull BlockData blockData, @NotNull ChatColor color, float size) {
+    protected void spawnVisualBlock(int entityID, @NotNull Player player, @NotNull Location location, @NotNull BlockData blockData) {
         EntityType type = EntityType.BLOCK_DISPLAY;
         UUID uuid = UUID.randomUUID();
         String entityUID = uuid.toString();
@@ -38,10 +37,9 @@ public class BlockProtocolHighlighter extends BlockHighlighter {
 
         PacketContainer dataPacket = this.createMetadataPacket(entityID, metadata -> {
             metadata.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(0, WrappedDataWatcher.Registry.get(Byte.class)), (byte) (0x20 | 0x40)); //invis
-            metadata.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(12, WrappedDataWatcher.Registry.get(Vector3f.class)), new Vector3f(size, size, size)); // scale
+            metadata.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(12, WrappedDataWatcher.Registry.get(Vector3f.class)), new Vector3f(BlockHighlighter.SIZE, BlockHighlighter.SIZE, BlockHighlighter.SIZE)); // scale
             metadata.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(23, WrappedDataWatcher.Registry.getBlockDataSerializer(false)), WrappedBlockData.createData(blockData)); // slot
         });
-
 
         PacketContainer teamPacket = new PacketContainer(PacketType.Play.Server.SCOREBOARD_TEAM);
         teamPacket.getStrings().write(0, entityUID); // Name
@@ -52,19 +50,16 @@ public class BlockProtocolHighlighter extends BlockHighlighter {
             .displayName(WrappedChatComponent.fromText(entityUID))
             .prefix(WrappedChatComponent.fromText(""))
             .suffix(WrappedChatComponent.fromText(""))
-            .color(EnumWrappers.ChatFormatting.fromBukkit(color))
+            .color(EnumWrappers.ChatFormatting.fromBukkit(BlockHighlighter.COLOR))
             .nametagVisibility(Team.OptionStatus.ALWAYS.name())
             .collisionRule(Team.OptionStatus.ALWAYS.name())
             .options(0)
             .build();
         teamPacket.getOptionalTeamParameters().write(0, Optional.of(parameters));
 
-
         this.manager.sendServerPacket(player, spawnPacket);
         this.manager.sendServerPacket(player, teamPacket);
         this.manager.sendServerPacket(player, dataPacket);
-
-        //return new FakeEntity(entityID, uuid);
     }
 
     @Override

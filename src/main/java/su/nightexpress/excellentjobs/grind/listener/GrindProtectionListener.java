@@ -68,16 +68,16 @@ public class GrindProtectionListener extends AbstractListener<JobsPlugin> {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onGlitchBlockGeneration(BlockFormEvent event) {
         if (Config.ABUSE_IGNORE_BLOCK_GENERATION.get().contains(event.getNewState().getType())) {
-            this.plugin.runTask(task -> {
-                PlayerBlockTracker.trackForce(event.getBlock());
-            });
+            this.plugin.runTask(() ->
+                  PlayerBlockTracker.trackForce(event.getBlock())
+            );
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        // An extra marker that a block was placed by a player for the #isPlayerBlock method,
+        // An extra marker that a player placed a block for the #isPlayerBlock method,
         // that will handle both, BlockBreak and BlockDrop phases.
         if (PlayerBlockTracker.isTracked(block) && event.isDropItems()) {
             this.manager.markPlayerBlock(block, true);

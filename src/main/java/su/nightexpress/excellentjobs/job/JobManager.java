@@ -772,11 +772,10 @@ public class JobManager extends AbstractManager<JobsPlugin> {
             levelRewards.forEach(reward -> reward.run(player));
 
             Lang.JOB_LEVEL_REWARDS_LIST.message().send(player, replacer -> replacer
-                .replace(Placeholders.GENERIC_ENTRY, list -> {
-                    levelRewards.forEach(reward -> {
-                        list.add(reward.replacePlaceholders().apply(Lang.JOB_LEVEL_REWARDS_ENTRY.text()));
-                    });
-                }));
+                .replace(Placeholders.GENERIC_ENTRY, list ->
+                      levelRewards.forEach(reward ->
+                            list.add(reward.replacePlaceholders().apply(Lang.JOB_LEVEL_REWARDS_ENTRY.text()))
+                      )));
         }
     }
 

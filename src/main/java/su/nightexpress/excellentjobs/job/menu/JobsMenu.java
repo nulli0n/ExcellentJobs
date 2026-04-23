@@ -90,12 +90,10 @@ public class JobsMenu extends NormalMenu<JobsPlugin> implements Filled<Job>, Con
         return MenuFiller.builder(this)
             .setSlots(this.gridAutoSlots)
             .setItems(plugin.getJobManager().getJobs().stream().sorted(Comparator.comparing(Job::getName)).toList())
-            .setItemCreator(job -> {
-                return this.replaceJobItem(player, job);
-            })
-            .setItemClick(job -> (viewer1, event) -> {
-                this.onJobClick(viewer1, job);
-            })
+            .setItemCreator(job -> this.replaceJobItem(player, job))
+            .setItemClick(job -> (viewer1, event) ->
+                  this.onJobClick(viewer1, job)
+            )
             .build();
     }
 
@@ -114,9 +112,9 @@ public class JobsMenu extends NormalMenu<JobsPlugin> implements Filled<Job>, Con
             if (slot == null || slot.page != page) return;
 
             NightItem item = this.replaceJobItem(player, job);
-            MenuItem menuItem = item.toMenuItem().setSlots(slot.slots).setPriority(100).setHandler((viewer1, event) -> {
-                this.onJobClick(viewer1, job);
-            }).build();
+            MenuItem menuItem = item.toMenuItem().setSlots(slot.slots).setPriority(100).setHandler((viewer1, event) ->
+                  this.onJobClick(viewer1, job)).build(
+            );
 
             viewer.addItem(menuItem);
         });
@@ -130,7 +128,7 @@ public class JobsMenu extends NormalMenu<JobsPlugin> implements Filled<Job>, Con
             return;
         }
 
-        this.runNextTick(() -> this.plugin.getJobManager().openLevelsMenu(player, job));
+        this.plugin.runTask(player, () -> this.plugin.getJobManager().openLevelsMenu(player, job));
     }
 
     private NightItem replaceJobItem(@NotNull Player player, @NotNull Job job) {

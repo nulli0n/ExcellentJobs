@@ -32,9 +32,6 @@ import static su.nightexpress.excellentjobs.Placeholders.*;
 
 public class Job implements Writeable {
 
-    public static final String CONFIG_NAME = "settings.yml";
-    public static final String OBJECTIVES_CONFIG_NAME = "objectives.yml";
-
     private final JobsPlugin plugin;
     private final String id;
 
@@ -167,9 +164,7 @@ public class Job implements Writeable {
 
         this.paymentDailyLimits.putAll(ConfigValue.forMapById("Daily_Limits.Currency",
             Modifier::read,
-            map -> {
-                map.put(CurrencyId.VAULT, Modifier.add(-1, 0, 0));
-            },
+            map -> map.put(CurrencyId.VAULT, Modifier.add(-1, 0, 0)),
             "Defines daily Income limits on per currency basis.",
             "You can use the '" + DEFAULT + "' keyword for all currencies that are not listed here.",
             URL_WIKI_DAILY_LIMITS,
@@ -248,18 +243,18 @@ public class Job implements Writeable {
         config.set(path + ".Leveling.Rewards", this.rewards);
 
         config.remove(path + ".Daily_Limits.Currency");
-        this.getDailyPaymentLimits().forEach((id, mod) -> {
-            mod.write(config, "Daily_Limits.Currency." + id);
-        });
+        this.getDailyPaymentLimits().forEach((id, mod) ->
+              mod.write(config, "Daily_Limits.Currency." + id)
+        );
 
         config.set(path + ".Bonus.XP", this.xpBonus);
         config.set(path + ".Bonus.Income", this.incomeBonus);
         config.set(path + ".Daily_Limits.XP", this.xpDailyLimits);
 
         config.remove(path + ".Objectives");
-        this.objectiveById.forEach((id, objective) -> {
-            config.set(path + ".Objectives." + id, objective);
-        });
+        this.objectiveById.forEach((id, objective) ->
+              config.set(path + ".Objectives." + id, objective)
+        );
     }
 
     @NotNull
@@ -300,8 +295,6 @@ public class Job implements Writeable {
         return (int) (this.initialXP * (Math.pow(this.xpFactor, level)));
     }
 
-
-
     public boolean hasDailyPaymentLimit(@NotNull Currency currency, int level) {
         return this.hasDailyPaymentLimit(currency.getInternalId(), level);
     }
@@ -318,7 +311,6 @@ public class Job implements Writeable {
         Modifier scaler = this.getDailyPaymentLimits().getOrDefault(id.toLowerCase(), this.getDailyPaymentLimits().get(Placeholders.DEFAULT));
         return scaler == null ? -1D : scaler.getValue(level);
     }
-
 
     @NotNull
     public Bonus getXPBonus() {

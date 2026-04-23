@@ -75,9 +75,7 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
         int limit = this.rewardSlots.length;
         int page = (int) Math.ceil((double) level / (double) limit);
 
-        this.open(player, job, viewer -> {
-            viewer.setPage(page);
-        });
+        this.open(player, job, viewer -> viewer.setPage(page));
     }
 
     @Override
@@ -115,9 +113,9 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
                 }
 
                 List<String> rewardFormats = new ArrayList<>();
-                rewards.forEach(reward -> {
-                    rewardFormats.addAll(Replacer.create().replace(reward.replacePlaceholders()).apply(this.rewardFormat));
-                });
+                rewards.forEach(reward ->
+                      rewardFormats.addAll(Replacer.create().replace(reward.replacePlaceholders()).apply(this.rewardFormat))
+                );
                 if (rewards.isEmpty()) {
                     rewardFormats.add(CoreLang.OTHER_NONE.text());
                 }
@@ -142,7 +140,7 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
                 });
                 this.plugin.getUserManager().save(user);
 
-                this.runNextTick(() -> this.flush(viewer));
+                this.plugin.runTask(viewer.getPlayer(), () -> this.flush(viewer));
             })
             .build();
     }
@@ -189,7 +187,7 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
         Player player = viewer.getPlayer();
         Job job = this.getLink(player);
         this.plugin.getJobManager().joinJob(player, job);
-        this.runNextTick(() -> this.flush(player));
+        this.plugin.runTask(player, () -> this.flush(player));
     }
 
     @Deprecated
@@ -197,7 +195,7 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
         Player player = viewer.getPlayer();
         Job job = this.getLink(player);
         this.plugin.getJobManager().joinOrLeaveJob(player, job, state, false);
-        this.runNextTick(() -> this.flush(player));
+        this.plugin.runTask(player, () -> this.flush(player));
     }
 
     @Deprecated
@@ -208,7 +206,7 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
         if (!data.isActive()) return;
 
         this.plugin.getJobManager().leaveJob(player, job);
-        this.runNextTick(() -> this.flush(player));
+        this.plugin.runTask(player, () -> this.flush(player));
     }
 
     private void handleStats(@NotNull MenuViewer viewer, @NotNull InventoryClickEvent event) {
@@ -220,11 +218,11 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
         JobData data = plugin.getUserManager().getOrFetch(player).getData(job);
         if (!data.isActive()) return;
 
-        this.runNextTick(() -> statsManager.openStats(player, job));
+        this.plugin.runTask(player, () -> statsManager.openStats(player, job));
     }
 
     private void handleJobs(@NotNull MenuViewer viewer, @NotNull InventoryClickEvent event) {
-        this.runNextTick(() -> plugin.getJobManager().openJobsMenu(viewer.getPlayer()));
+        this.plugin.runTask(viewer.getPlayer(), () -> plugin.getJobManager().openJobsMenu(viewer.getPlayer()));
     }
 
     @Override
@@ -474,9 +472,8 @@ public class LevelsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBas
     @NotNull
     private ItemHandler createStatusHandler(@NotNull JobState state) {
         return new ItemHandler(LowerCase.USER_LOCALE.apply("status_" + state.name()),
-            (viewer, event) -> {
-                JobDialogs.openJobStateDialog(plugin, viewer.getPlayer(), this.getLink(viewer));
-            },
+            (viewer, event) ->
+                  JobDialogs.openJobStateDialog(plugin, viewer.getPlayer(), this.getLink(viewer)),
             ItemOptions.builder()
                 .setVisibilityPolicy(viewer -> {
                     Job job = this.getLink(viewer);

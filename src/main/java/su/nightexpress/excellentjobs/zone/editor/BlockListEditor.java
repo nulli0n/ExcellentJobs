@@ -26,9 +26,9 @@ public class BlockListEditor extends LinkedMenu<JobsPlugin, BlockListEditor.Data
     public BlockListEditor(@NotNull JobsPlugin plugin, @NotNull ZoneManager zoneManager) {
         super(plugin, MenuType.GENERIC_9X4, Lang.EDITOR_TITLE_ZONE_BLOCK_SETTINGS.text());
 
-        this.addItem(MenuItem.buildReturn(this, 31, (viewer, event) -> {
-            this.runNextTick(() -> zoneManager.openBlocksEditor(viewer.getPlayer(), this.getLink(viewer).zone));
-        }));
+        this.addItem(MenuItem.buildReturn(this, 31, (viewer, event) ->
+              this.plugin.runTask(viewer.getPlayer(), () -> zoneManager.openBlocksEditor(viewer.getPlayer(), this.getLink(viewer).zone)))
+        );
 
         this.addItem(Material.MAP, Lang.EDITOR_ZONE_BLOCK_LIST_MATERIALS, 10, (viewer, event, data) -> {
             if (event.isRightClick()) {
@@ -79,7 +79,7 @@ public class BlockListEditor extends LinkedMenu<JobsPlugin, BlockListEditor.Data
 
     private void save(@NotNull MenuViewer viewer) {
         this.getLink(viewer).zone.save();
-        this.runNextTick(() -> this.flush(viewer));
+        this.plugin.runTask(viewer.getPlayer(), () -> this.flush(viewer));
     }
 
     @Override

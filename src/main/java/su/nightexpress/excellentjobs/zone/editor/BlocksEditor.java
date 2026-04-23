@@ -35,9 +35,9 @@ public class BlocksEditor extends LinkedMenu<JobsPlugin, Zone> implements Filled
 
         this.addItem(MenuItem.buildNextPage(this, 44));
         this.addItem(MenuItem.buildPreviousPage(this, 36));
-        this.addItem(MenuItem.buildReturn(this, 39, (viewer, event) -> {
-            this.runNextTick(() -> this.manager.openEditor(viewer.getPlayer(), this.getLink(viewer)));
-        }));
+        this.addItem(MenuItem.buildReturn(this, 39, (viewer, event) ->
+              this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openEditor(viewer.getPlayer(), this.getLink(viewer))))
+        );
 
         this.addItem(Material.ANVIL, Lang.EDITOR_ZONE_BLOCK_LIST_CREATE, 41, (viewer, event, zone) -> {
             this.handleInput(Dialog.builder(viewer, Lang.EDITOR_GENERIC_ENTER_ID.text(), input -> {
@@ -90,11 +90,11 @@ public class BlocksEditor extends LinkedMenu<JobsPlugin, Zone> implements Filled
                 if (event.isShiftClick() && event.isRightClick()) {
                     zone.getBlockListMap().remove(blockList.getId());
                     zone.save();
-                    this.runNextTick(() -> this.flush(viewer1));
+                    this.plugin.runTask(viewer1.getPlayer(), () -> this.flush(viewer1));
                     return;
                 }
 
-                this.runNextTick(() -> this.manager.openBlockListEditor(viewer1.getPlayer(), zone, blockList));
+                this.plugin.runTask(viewer1.getPlayer(), () -> this.manager.openBlockListEditor(viewer1.getPlayer(), zone, blockList));
             })
             .build();
     }

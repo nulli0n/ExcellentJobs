@@ -1,7 +1,6 @@
 package su.nightexpress.excellentjobs.grind.table.impl;
 
 import org.bukkit.entity.Entity;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentjobs.grind.GrindReward;
 import su.nightexpress.excellentjobs.grind.adapter.GrindAdapterFamily;
@@ -41,7 +40,7 @@ public class KillingGrindTable implements GrindTable {
     }
 
     @NotNull
-    public GrindReward getKillXP(@NotNull Entity mob, @NotNull ItemStack tool, boolean isSpawner) {
+    public GrindReward getKillXP(@NotNull Entity mob, boolean isSpawner) {
         GrindReward reward = this.killTable.rollForEntityOrDefault(mob, GrindAdapterFamily.ENTITY);
 
         if (isSpawner) {

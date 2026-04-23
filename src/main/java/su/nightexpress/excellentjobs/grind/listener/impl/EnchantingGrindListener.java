@@ -24,9 +24,8 @@ public class EnchantingGrindListener extends GrindListener<EnchantingGrindTable,
         Player player = event.getEnchanter();
         if (!this.grindManager.canGrinding(player)) return;
 
-        event.getEnchantsToAdd().forEach((enchantment, level) -> {
-            //Debugger.info(player, () -> DEBUG_ENCHANTING.formatted(LangUtil.getSerializedName(enchantment), NumberUtil.toRoman(level)));
-            this.giveXP(player, (skill, table) -> table.getEnchantXP(enchantment, level));
-        });
+        event.getEnchantsToAdd().forEach((enchantment, level) ->
+              this.giveXP(player, (skill, table) -> table.getEnchantXP(enchantment, level))
+        );
     }
 }

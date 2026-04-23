@@ -17,7 +17,6 @@ import java.util.function.Function;
 public class GrindAdapterRegistry {
 
     private static final Map<String, GrindAdapter<?, ?>> ADAPTER_BY_ID = new HashMap<>();
-    //private static final Map<String, GrindAdapter<?, ?>> ADAPTER_BY_KEY = new HashMap<>();
 
     private static JobsPlugin plugin;
 
@@ -29,7 +28,6 @@ public class GrindAdapterRegistry {
 
     public static void clear() {
         ADAPTER_BY_ID.clear();
-        //ADAPTER_BY_KEY.clear();
         plugin = null;
     }
 
@@ -42,7 +40,6 @@ public class GrindAdapterRegistry {
 
         registerExternal(HookPlugin.MYTHIC_MOBS, MythicMobAdapter::new, GrindAdapterFamily.ENTITY);
         registerExternal(HookPlugin.EVEN_MORE_FISH, EvenMoreFishAdapter::new, GrindAdapterFamily.ITEM);
-        //registerExternal(HookPlugin.CUSTOM_FISHING, CustomFishingAdapter::new, GrindAdapterFamily.ITEM);
         registerExternal(HookPlugin.CUSTOM_CROPS, CustomCropsAdapter::new, GrindAdapterFamily.BLOCK);
     }
 
@@ -62,16 +59,10 @@ public class GrindAdapterRegistry {
         // TODO Check disabled
         family.addAdapter(adapter);
         ADAPTER_BY_ID.put(adapter.getName(), adapter);
-        //ADAPTER_BY_KEY.put(adapter.getKey(), adapter);
     }
 
     @Nullable
     public static GrindAdapter<?, ?> getAdapterByName(@NotNull String name) {
         return ADAPTER_BY_ID.get(LowerCase.INTERNAL.apply(name));
     }
-
-    /*@Nullable
-    public static GrindAdapter<?, ?> getAdapterByKey(@NotNull String key) {
-        return ADAPTER_BY_KEY.get(LowerCase.INTERNAL.apply(key));
-    }*/
 }

@@ -39,7 +39,7 @@ public class ModifierListEditor extends LinkedMenu<JobsPlugin, Zone> implements 
         this.addItem(MenuItem.buildNextPage(this, 44));
         this.addItem(MenuItem.buildPreviousPage(this, 36));
         this.addItem(MenuItem.buildReturn(this, 39, (viewer, event) -> {
-            this.runNextTick(() -> this.manager.openEditor(viewer.getPlayer(), this.getLink(viewer)));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openEditor(viewer.getPlayer(), this.getLink(viewer)));
         }));
 
         this.addItem(Material.ANVIL, Lang.EDITOR_ZONE_MODIFIER_CURRENCY_CREATE, 41, (viewer, event, zone) -> {
@@ -54,7 +54,7 @@ public class ModifierListEditor extends LinkedMenu<JobsPlugin, Zone> implements 
         });
 
         this.addItem(Material.EXPERIENCE_BOTTLE, Lang.EDITOR_ZONE_MODIFIER_XP_OBJECT, 4, (viewer, event, zone) -> {
-            this.runNextTick(() -> this.manager.openModifierEditor(viewer.getPlayer(), zone, zone.getXPModifier()));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openModifierEditor(viewer.getPlayer(), zone, zone.getXPModifier()));
         }, ItemOptions.builder().setDisplayModifier((viewer, item) -> {
             Zone zone = this.getLink(viewer);
             item.replacement(replacer -> replacer.replace(zone.getXPModifier().replacePlaceholders()));
@@ -96,18 +96,18 @@ public class ModifierListEditor extends LinkedMenu<JobsPlugin, Zone> implements 
             .setItemClick(currency -> (viewer1, event) -> {
                 Modifier modifier = zone.getPaymentModifier(currency);
                 if (modifier == null) {
-                    this.runNextTick(() -> this.flush(viewer));
+                    this.plugin.runTask(viewer.getPlayer(), () -> this.flush(viewer));
                     return;
                 }
 
                 if (event.getClick() == ClickType.DROP) {
                     zone.getPaymentModifierMap().remove(currency.getInternalId());
                     zone.save();
-                    this.runNextTick(() -> this.flush(viewer));
+                    this.plugin.runTask(viewer.getPlayer(), () -> this.flush(viewer));
                     return;
                 }
 
-                this.runNextTick(() -> this.manager.openModifierEditor(player, zone, modifier));
+                this.plugin.runTask(player, () -> this.manager.openModifierEditor(player, zone, modifier));
             })
             .build();
     }

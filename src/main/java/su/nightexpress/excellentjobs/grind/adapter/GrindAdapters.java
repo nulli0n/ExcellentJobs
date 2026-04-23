@@ -9,5 +9,4 @@ public class GrindAdapters {
     public static final VanillaBlockStateAdapter  VANILLA_BLOCK_STATE = new VanillaBlockStateAdapter("vanilla_block_state");
     public static final VanillaItemAdapter        VANILLA_ITEM        = new VanillaItemAdapter("vanilla_item");
     public static final VanillaEnchantmentAdapter VANILLA_ENCHANTMENT = new VanillaEnchantmentAdapter("enchantment");
-
 }

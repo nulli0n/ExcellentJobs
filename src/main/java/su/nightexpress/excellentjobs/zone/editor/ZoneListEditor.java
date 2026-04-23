@@ -37,7 +37,7 @@ public class ZoneListEditor extends LinkedMenu<JobsPlugin, ZoneManager> implemen
         this.addItem(Material.ANVIL, Lang.EDITOR_ZONE_CREATE, 41, (viewer, event, manager) -> {
             Player player = viewer.getPlayer();
             manager.startSelection(player, null);
-            this.runNextTick(player::closeInventory);
+            this.plugin.runTask(player, player::closeInventory);
         });
     }
 
@@ -60,31 +60,29 @@ public class ZoneListEditor extends LinkedMenu<JobsPlugin, ZoneManager> implemen
         return MenuFiller.builder(this)
             .setSlots(IntStream.range(0, 36).toArray())
             .setItems(manager.getZones().stream().sorted(Comparator.comparing(Zone::getId)).toList())
-            .setItemCreator(zone -> {
-                return zone.getIcon()
-                    .localized(Lang.EDITOR_ZONE_OBJECT)
-                    .replacement(replacer -> replacer
-                        .replace(zone.replaceAllPlaceholders())
-                    );
-            })
+            .setItemCreator(zone -> zone.getIcon()
+                .localized(Lang.EDITOR_ZONE_OBJECT)
+                .replacement(replacer -> replacer
+                    .replace(zone.replaceAllPlaceholders())
+                ))
             .setItemClick(zone -> (viewer1, event) -> {
                 ItemStack cursor = event.getCursor();
-                if (cursor != null && !cursor.getType().isAir()) {
+                if (!cursor.getType().isAir()) {
                     Players.addItem(viewer1.getPlayer(), cursor);
                     zone.setIcon(NightItem.fromItemStack(cursor));
                     zone.save();
                     event.getView().setCursor(null);
-                    this.runNextTick(() -> this.flush(viewer1));
+                    this.plugin.runTask(viewer1.getPlayer(), () -> this.flush(viewer1));
                     return;
                 }
 
                 if (event.isShiftClick() && event.isRightClick()) {
                     manager.deleteZone(zone.getId());
-                    this.runNextTick(() -> this.flush(viewer1));
+                    this.plugin.runTask(viewer1.getPlayer(), () -> this.flush(viewer1));
                     return;
                 }
 
-                this.runNextTick(() -> manager.openEditor(viewer1.getPlayer(), zone));
+                this.plugin.runTask(viewer1.getPlayer(), () -> manager.openEditor(viewer1.getPlayer(), zone));
             })
             .build();
     }

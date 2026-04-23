@@ -58,9 +58,9 @@ public class BoosterSchedule implements Writeable {
 
     @Override
     public void write(@NotNull FileConfig config, @NotNull String path) {
-        this.dayTimes.forEach((day, times) -> {
-            config.set(path + ".Start_Times." + day.name(), times.format(TIME_FORMATTER));
-        });
+        this.dayTimes.forEach((day, times) ->
+              config.set(path + ".Start_Times." + day.name(), times.format(TIME_FORMATTER))
+        );
         config.set(path + ".Income_Multiplier", this.incomeMultiplier);
         config.set(path + ".XP_Multiplier", this.xpMultiplier);
         config.set(path + ".Duration", this.duration);

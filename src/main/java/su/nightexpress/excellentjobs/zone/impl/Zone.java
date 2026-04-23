@@ -198,7 +198,7 @@ public class Zone extends AbstractFileData<JobsPlugin> {
         long resetDate = TimeUtil.createFutureTimestamp(blockList.getResetTime());
 
         this.renewBlocks.put(pos, new RenewBlock(blockData, resetDate));
-        this.plugin.runTask(task -> this.world.setBlockData(block.getLocation(), blockList.getFallbackMaterial().createBlockData()));
+        this.plugin.runTask(() -> this.world.setBlockData(block.getLocation(), blockList.getFallbackMaterial().createBlockData()));
         return true;
     }
 

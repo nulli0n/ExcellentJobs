@@ -41,13 +41,13 @@ public class ZoneEditor extends LinkedMenu<JobsPlugin, Zone> {
         super(plugin, MenuType.GENERIC_9X6, Lang.EDITOR_TITLE_ZONE_SETTINGS.text());
         this.manager = manager;
 
-        this.addItem(MenuItem.buildReturn(this, 49, (viewer, event) -> {
-            this.runNextTick(() -> this.manager.openEditor(viewer.getPlayer()));
-        }));
+        this.addItem(MenuItem.buildReturn(this, 49, (viewer, event) ->
+              this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openEditor(viewer.getPlayer())))
+        );
 
         this.addItem(ItemUtil.getSkinHead(SKIN_BOUNDS), Lang.EDITOR_ZONE_SELECTION, 4, (viewer, event, zone) -> {
             this.manager.startSelection(viewer.getPlayer(), zone);
-            this.runNextTick(() -> viewer.getPlayer().closeInventory());
+            this.plugin.runTask(viewer.getPlayer(), () -> viewer.getPlayer().closeInventory());
         });
 
         this.addItem(ItemUtil.getSkinHead(SKIN_LETTER), Lang.EDITOR_ZONE_NAME, 20, (viewer, event, zone) -> {
@@ -127,11 +127,11 @@ public class ZoneEditor extends LinkedMenu<JobsPlugin, Zone> {
                 return;
             }
 
-            this.runNextTick(() -> this.manager.openTimesEditor(viewer.getPlayer(), zone));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openTimesEditor(viewer.getPlayer(), zone));
         });
 
         this.addItem(ItemUtil.getSkinHead(SKIN_GOLD), Lang.EDITOR_ZONE_MODIFIERS, 13, (viewer, event, zone) -> {
-            this.runNextTick(() -> this.manager.openModifiersEditor(viewer.getPlayer(), zone));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openModifiersEditor(viewer.getPlayer(), zone));
         });
 
         this.addItem(Material.DIAMOND_SWORD, Lang.EDITOR_ZONE_PVP_ALLOWED, 14, (viewer, event, zone) -> {
@@ -140,7 +140,7 @@ public class ZoneEditor extends LinkedMenu<JobsPlugin, Zone> {
         });
 
         this.addItem(ItemUtil.getSkinHead(SKIN_ORE), Lang.EDITOR_ZONE_BLOCK_LISTS, 30, (viewer, event, zone) -> {
-            this.runNextTick(() -> this.manager.openBlocksEditor(viewer.getPlayer(), zone));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openBlocksEditor(viewer.getPlayer(), zone));
         });
 
         this.addItem(ItemUtil.getSkinHead(SKIN_WORKBENCH), Lang.EDITOR_ZONE_DISABLED_BLOCKS, 32, (viewer, event, zone) -> {
@@ -172,7 +172,7 @@ public class ZoneEditor extends LinkedMenu<JobsPlugin, Zone> {
 
     private void save(@NotNull MenuViewer viewer) {
         this.getLink(viewer).save();
-        this.runNextTick(() -> this.flush(viewer));
+        this.plugin.runTask(viewer.getPlayer(), () -> this.flush(viewer));
     }
 
     @Override

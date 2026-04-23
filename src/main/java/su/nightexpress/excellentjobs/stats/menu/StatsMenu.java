@@ -85,15 +85,7 @@ public class StatsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBase
             }
             if (currencyAmounts.isEmpty()) currencyAmounts.add(this.nothingEntry);
 
-
-            /*for (JobLegacyObjective objective : job.getObjectives()) {
-                int amount = dayStats.getObjectives(objective);
-                if (amount == 0) continue;
-
-                objectiveAmounts.add(this.objectiveEntry.replace(OBJECTIVE_NAME, objective.getDisplayName()).replace(GENERIC_AMOUNT, NumberUtil.format(amount)));
-            }*/
-            if (objectiveAmounts.isEmpty()) objectiveAmounts.add(this.nothingEntry);
-
+            objectiveAmounts.add(this.nothingEntry);
 
             NightItem item = entry.item().copy().hideAllComponents()
                 .setDisplayName(this.entryName)
@@ -109,7 +101,7 @@ public class StatsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBase
     }
     
     private void handleReturn(@NotNull MenuViewer viewer, @NotNull InventoryClickEvent event) {
-        this.runNextTick(() -> plugin.getJobManager().openLevelsMenu(viewer.getPlayer(), this.getLink(viewer)));
+        this.plugin.runTask(viewer.getPlayer(), () -> plugin.getJobManager().openLevelsMenu(viewer.getPlayer(), this.getLink(viewer)));
     }
 
     @Override
@@ -128,9 +120,9 @@ public class StatsMenu extends LinkedMenu<JobsPlugin, Job> implements ConfigBase
             config.set("Stats.Entries.alltime", entryAll);
         }
 
-        config.getSection("Stats.Entries").forEach(sId -> {
-            this.entries.add(StatsEntry.read(config, "Stats.Entries." + sId));
-        });
+        config.getSection("Stats.Entries").forEach(sId ->
+              this.entries.add(StatsEntry.read(config, "Stats.Entries." + sId))
+        );
 
         this.entryName = ConfigValue.create("Stats.Entry.Name",
             SOFT_AQUA.wrap(BOLD.wrap("Stats: ")) + GRAY.wrap(GENERIC_NAME)

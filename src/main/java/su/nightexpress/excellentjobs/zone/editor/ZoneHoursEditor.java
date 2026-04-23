@@ -56,7 +56,7 @@ public class ZoneHoursEditor extends LinkedMenu<JobsPlugin, Zone> implements Fil
         this.manager = manager;
 
         this.addItem(MenuItem.buildReturn(this, 31, (viewer, event) -> {
-            this.runNextTick(() -> this.manager.openEditor(viewer.getPlayer(), this.getLink(viewer)));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.manager.openEditor(viewer.getPlayer(), this.getLink(viewer)));
         }));
     }
 
@@ -96,7 +96,7 @@ public class ZoneHoursEditor extends LinkedMenu<JobsPlugin, Zone> implements Fil
             if (event.isRightClick()) {
                 zone.getHoursByDayMap().remove(day);
                 zone.save();
-                this.runNextTick(() -> this.flush(viewer1));
+                this.plugin.runTask(viewer1.getPlayer(), () -> this.flush(viewer1));
                 return;
             }
 

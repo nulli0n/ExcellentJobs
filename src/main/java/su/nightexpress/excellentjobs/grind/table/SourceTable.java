@@ -45,14 +45,13 @@ public class SourceTable implements Writeable {
     public static <O> SourceTable fromConverted(@NotNull Map<String, SourceReward> convertedEntries, @NotNull GrindAdapterFamily<O> family) {
         Map<String, SourceReward> entires = new HashMap<>();
 
-        convertedEntries.forEach((name, reward) -> {
-            family.getAdapters().forEach(adapter -> {
-                Object type = adapter.getTypeByName(name);
-                if (type == null) return;
+        convertedEntries.forEach((name, reward) ->
+              family.getAdapters().forEach(adapter -> {
+                  Object type = adapter.getTypeByName(name);
+                  if (type == null) return;
 
-                entires.put(adapter.toFullName(name), reward);
-            });
-        });
+                  entires.put(adapter.toFullName(name), reward);
+              }));
 
         return new SourceTable(entires);
     }
@@ -60,9 +59,9 @@ public class SourceTable implements Writeable {
     @Override
     public void write(@NotNull FileConfig config, @NotNull String path) {
         config.remove(path);
-        this.entires.forEach((name, entry) -> {
-            config.set(path + "." + name, entry.serialize());
-        });
+        this.entires.forEach((name, entry) ->
+              config.set(path + "." + name, entry.serialize())
+        );
     }
 
     @NotNull
@@ -184,9 +183,7 @@ public class SourceTable implements Writeable {
 
 
         public <I, O, E extends GrindAdapter<I, O>> Builder addTypesAvg(@NotNull Collection<I> types, @NotNull E adapter, double xpAvg) {
-            types.forEach(type -> {
-                this.addTypeAvg(type, adapter, xpAvg);
-            });
+            types.forEach(type -> this.addTypeAvg(type, adapter, xpAvg));
             return this;
         }
 
@@ -215,8 +212,6 @@ public class SourceTable implements Writeable {
         public <I, O, E extends GrindAdapter<I, O>> Builder addType(@NotNull I type, @NotNull E adapter, double xpMin, double xpMax, double moneyMin, double moneyMax, double chance) {
             return this.addEntry(adapter.toFullNameOfType(type), xpMin, xpMax, moneyMin, moneyMax, chance);
         }
-
-
 
         public <I, O, E extends GrindAdapter<I, O>> Builder addEntity(@NotNull O entity, @NotNull E adapter, double xp, double money) {
             return this.addEntity(entity, adapter, xp, money, SourceReward.MAX_CHANCE);

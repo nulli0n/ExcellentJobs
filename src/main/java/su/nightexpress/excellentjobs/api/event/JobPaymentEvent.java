@@ -17,7 +17,7 @@ public class JobPaymentEvent extends JobEvent implements Cancellable {
     private boolean cancelled;
 
     public JobPaymentEvent(@NotNull Player player, @NotNull Job job, @NotNull JobIncome income) {
-        super(!Bukkit.isPrimaryThread(), player, job);
+        super(false, player, job);
         this.income = income;
     }
 

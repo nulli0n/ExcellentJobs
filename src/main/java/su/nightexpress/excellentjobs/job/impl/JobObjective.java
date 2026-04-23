@@ -23,13 +23,6 @@ public class JobObjective implements Writeable {
         return new JobObjective(CurrencyId.VAULT, grindTypeId, table);
     }
 
-    /*public static JobObjective read(@NotNull FileConfig config, @NotNull String path) {
-        String currencyId = ConfigValue.create(path + ".Currencu", CurrencyId.VAULT).read(config);
-        String grindTypeId = ConfigValue.create(path + ".Type", "null").read(config);
-        Gr
-    }*/
-
-
     @Override
     public void write(@NotNull FileConfig config, @NotNull String path) {
         config.set(path + ".Currency", this.currencyId);

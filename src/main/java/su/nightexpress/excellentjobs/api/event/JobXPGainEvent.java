@@ -17,7 +17,6 @@ public class JobXPGainEvent extends JobDataEvent implements Cancellable {
 
     public JobXPGainEvent(@NotNull Player player, @NotNull JobUser user, @NotNull JobData jobData, double amount, double multiplier) {
         super(player, user, jobData);
-
         this.setAmount(amount);
         this.setMultiplier(multiplier);
     }

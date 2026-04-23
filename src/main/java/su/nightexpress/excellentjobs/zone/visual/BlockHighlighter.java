@@ -35,7 +35,6 @@ public abstract class BlockHighlighter {
     }
 
     public void addVisualBlock(@NotNull Player player, @NotNull Location location, @NotNull BlockData blockData) {
-        //List<FakeEntity> entities = this.getEntityMap(player.getUniqueId()).computeIfAbsent(type, k -> new ArrayList<>());
         List<Integer> idList = this.entityIdMap.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>());
 
         // To shift scaled down/up displays to the center of a block location.
@@ -49,13 +48,12 @@ public abstract class BlockHighlighter {
 
         int entityID = this.nextEntityId();
 
-        /*FakeEntity entity = */this.spawnVisualBlock(entityID, player, location, blockData, COLOR, SIZE);
-        //entities.add(entity);
+        this.spawnVisualBlock(entityID, player, location, blockData);
 
         idList.add(entityID);
     }
 
-    protected abstract void spawnVisualBlock(int entityID, @NotNull Player player, @NotNull Location location, @NotNull BlockData blockData, @NotNull ChatColor color, float size);
+    protected abstract void spawnVisualBlock(int entityID, @NotNull Player player, @NotNull Location location, @NotNull BlockData blockData);
 
     protected abstract void destroyEntity(@NotNull Player player, @NotNull List<Integer> idList);
 }

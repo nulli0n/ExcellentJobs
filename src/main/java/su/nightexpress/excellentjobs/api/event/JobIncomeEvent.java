@@ -19,7 +19,6 @@ public class JobIncomeEvent extends JobDataEvent implements Cancellable {
 
     public JobIncomeEvent(@NotNull Player player, @NotNull JobUser user, @NotNull JobData jobData, @NotNull Currency currency, double amount, double multiplier) {
         super(player, user, jobData);
-
         this.setCurrency(currency);
         this.setAmount(amount);
         this.setMultiplier(multiplier);

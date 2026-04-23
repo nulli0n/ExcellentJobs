@@ -37,12 +37,10 @@ public class CraftingGrindListener extends GrindListener<BasicItemGrindTable, Ba
 
         if (event.isShiftClick()) {
             int has = Players.countItem(player, craftedItem);
-            this.plugin.getServer().getScheduler().runTask(plugin, () -> {
+            this.plugin.runTask(player, () -> {
                 int now = Players.countItem(player, craftedItem);
                 int crafted = now - has;
                 int craftedUnits = crafted / unitSize;
-
-                //Debugger.info(player, () -> DEBUG_MASS_CRAFT.formatted(String.valueOf(craftedUnits), ItemUtil.getNameSerialized(craftedItem)));
 
                 this.giveXP(player, (skill, table) -> table.getItemXP(craftedItem, craftedUnits));
             });

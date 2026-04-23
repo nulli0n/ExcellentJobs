@@ -3,7 +3,6 @@ package su.nightexpress.excellentjobs.grind.adapter.impl;
 import com.oheers.fish.EvenMoreFish;
 import com.oheers.fish.api.EMFAPI;
 import com.oheers.fish.fishing.items.Fish;
-import io.lumine.mythic.api.mobs.MythicMob;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

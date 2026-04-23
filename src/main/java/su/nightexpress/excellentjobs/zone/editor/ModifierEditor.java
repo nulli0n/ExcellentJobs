@@ -28,9 +28,9 @@ public class ModifierEditor extends LinkedMenu<JobsPlugin, ModifierEditor.Data> 
     public ModifierEditor(@NotNull JobsPlugin plugin, @NotNull ZoneManager manager) {
         super(plugin, MenuType.GENERIC_9X4, Lang.EDITOR_TITLE_ZONE_MODIFIER_SETTINGS.text());
 
-        this.addItem(MenuItem.buildReturn(this, 31, (viewer, event) -> {
-            this.runNextTick(() -> manager.openModifiersEditor(viewer.getPlayer(), this.getLink(viewer).zone()));
-        }));
+        this.addItem(MenuItem.buildReturn(this, 31, (viewer, event) ->
+              this.plugin.runTask(viewer.getPlayer(), () -> manager.openModifiersEditor(viewer.getPlayer(), this.getLink(viewer).zone())))
+        );
 
         this.addItem(Material.GLOWSTONE_DUST, Lang.EDITOR_MODIFIER_BASE, 10, (viewer, event, pair) -> {
             this.modifyValue(viewer, pair, Modifier::setBase);
@@ -48,7 +48,7 @@ public class ModifierEditor extends LinkedMenu<JobsPlugin, ModifierEditor.Data> 
             Modifier modifier = pair.modifier();
             modifier.setAction(Lists.next(modifier.getAction()));
             pair.zone().save();
-            this.runNextTick(() -> this.flush(viewer));
+            this.plugin.runTask(viewer.getPlayer(), () -> this.flush(viewer));
         });
     }
 

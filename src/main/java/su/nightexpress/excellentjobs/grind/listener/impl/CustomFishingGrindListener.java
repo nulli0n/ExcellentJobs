@@ -24,8 +24,7 @@ public class CustomFishingGrindListener extends GrindListener<BasicItemGrindTabl
     public void onGrindFishing(FishingResultEvent event) {
         if (event.getResult() != FishingResultEvent.Result.SUCCESS) return;
 
-        EquipmentSlot hand = EquipmentSlot.HAND;//event.getHand();
-        //if (hand == null) return;
+        EquipmentSlot hand = EquipmentSlot.HAND;
 
         Player player = event.getPlayer();
         if (!this.grindManager.canGrinding(player)) return;

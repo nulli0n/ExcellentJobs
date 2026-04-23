@@ -194,9 +194,9 @@ public class Config {
 
     public static final ConfigValue<Material> ZONES_HIGHLIGHT_BLOCK_WIRE = ConfigValue.create("Zones.Highlighting.WireBlock",
         Material.class,
-        Material.CHAIN,
+        Material.IRON_CHAIN,
         "Block type used for a fake block display entity for zone selection's corners connections.",
-        "[Default is " + BukkitThing.getValue(Material.CHAIN) + "]"
+        "[Default is " + BukkitThing.getValue(Material.IRON_CHAIN) + "]"
     );
 
     public static final ConfigValue<Boolean> LEVELING_FIREWORKS = ConfigValue.create("Leveling.Fireworks",

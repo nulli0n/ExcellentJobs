@@ -216,17 +216,7 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
             .add(ZONE_JOB_MIN_LEVEL, zone -> NumberUtil.format(zone.getMinJobLevel()))
             .add(ZONE_JOB_MAX_LEVEL, zone -> NumberUtil.format(zone.getMaxJobLevel()))
             .add(ZONE_HOURS_ENABLED, zone -> CoreLang.STATE_ENABLED_DISALBED.get(zone.isHoursEnabled()))
-//        .add(ZONE_CLOSE_TIME, zone -> {
-//            LocalTime time = zone.getNearestCloseTime();
-//            return time == null ? "-" : JobUtils.formatTime(time);
-//        })
-//        .add(ZONE_OPEN_TIME, zone -> {
-//            LocalTime time = zone.getNearestOpenTime();
-//            return time == null ? "-" : JobUtils.formatTime(time);
-//        })
-            .add(ZONE_DISABLED_BLOCK_INTERACTIONS, zone -> {
-                return String.join("\n", Lists.modify(zone.getDisabledInteractions(), type -> CoreLang.goodEntry(LangUtil.getSerializedName(type))));
-            })
+            .add(ZONE_DISABLED_BLOCK_INTERACTIONS, zone -> String.join("\n", Lists.modify(zone.getDisabledInteractions(), type -> CoreLang.goodEntry(LangUtil.getSerializedName(type)))))
     );
 
     public static final PlaceholderList<Zone> ZONE_EDITOR = PlaceholderList.create(list -> list
@@ -241,9 +231,9 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
 
     public static final PlaceholderList<BlockList> ZONE_BLOCK_LIST = PlaceholderList.create(list -> list
         .add(BLOCK_LIST_ID, BlockList::getId)
-        .add(BLOCK_LIST_MATERIALS, blockList -> {
-            return String.join("\n", blockList.getMaterials().stream().map(mat -> CoreLang.goodEntry(LangUtil.getSerializedName(mat))).toList());
-        })
+        .add(BLOCK_LIST_MATERIALS, blockList ->
+              String.join("\n", blockList.getMaterials().stream().map(mat -> CoreLang.goodEntry(LangUtil.getSerializedName(mat))).toList())
+        )
         .add(BLOCK_LIST_FALLBACK_MATERIAL, blockList -> CoreLang.goodEntry(LangUtil.getSerializedName(blockList.getFallbackMaterial())))
         .add(BLOCK_LIST_RESET_TIME, blockList -> CoreLang.goodEntry(TimeFormats.toLiteral(blockList.getResetTime() * 1000L)))
         .add(BLOCK_LIST_DROP_ITEMS, blockList -> {

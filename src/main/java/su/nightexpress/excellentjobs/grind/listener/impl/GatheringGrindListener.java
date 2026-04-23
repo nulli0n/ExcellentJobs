@@ -63,9 +63,9 @@ public class GatheringGrindListener extends GrindListener<GatheringGrindTable, G
         if (!this.grindManager.canGrinding(player)) return;
         if (this.grindManager.isSpawnerMob(entity)) return;
 
-        event.getDrops().forEach(itemStack -> {
-            this.giveXP(player, (job, table) -> table.getMobResourceXP(itemStack));
-        });
+        event.getDrops().forEach(itemStack ->
+              this.giveXP(player, (job, table) -> table.getMobResourceXP(itemStack))
+        );
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -83,11 +83,11 @@ public class GatheringGrindListener extends GrindListener<GatheringGrindTable, G
         if (!this.grindManager.canGrinding(player)) return;
 
         ItemStack itemStack = player.getInventory().getItem(slot);
-        if (itemStack == null || itemStack.getType() != Material.GLASS_BOTTLE) return;
+        if (itemStack.getType() != Material.GLASS_BOTTLE) return;
 
-        this.plugin.runTask(task -> {
+        this.plugin.runTask(() -> {
             ItemStack honey = player.getInventory().getItem(slot);
-            if (honey == null || honey.getType() != Material.HONEY_BOTTLE) return;
+            if (honey.getType() != Material.HONEY_BOTTLE) return;
 
             this.giveXP(player, (job, table) -> table.getBlockResourceXP(honey));
         });
