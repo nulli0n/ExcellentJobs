@@ -7,24 +7,31 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.GrindstoneInventory;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.grind.GrindContext;
+import su.nightexpress.excellentjobs.api.grind.GrindProtection;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
 import su.nightexpress.excellentjobs.grind.GrindManager;
 import su.nightexpress.excellentjobs.grind.listener.GrindListener;
-import su.nightexpress.excellentjobs.grind.table.impl.BasicItemGrindTable;
-import su.nightexpress.excellentjobs.grind.type.impl.BasicItemGrindType;
 
-public class GrindstoneGrindListener extends GrindListener<BasicItemGrindTable, BasicItemGrindType> {
+@NullMarked
+public class GrindstoneGrindListener extends GrindListener<ItemStack> {
 
-    public GrindstoneGrindListener(@NotNull JobsPlugin plugin, @NotNull GrindManager grindManager, @NotNull BasicItemGrindType grindType) {
-        super(plugin, grindManager, grindType);
+    public GrindstoneGrindListener(JobsPlugin plugin,
+                                   GrindManager manager,
+                                   @Nullable GrindProtection protection,
+                                   GrindType<ItemStack> type) {
+        super(plugin, manager, protection, type);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onXPInventoryHandler(InventoryClickEvent event) {
         if (!(event.getClickedInventory() instanceof GrindstoneInventory inventory)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!this.grindManager.canGrinding(player)) return;
+        if (!this.checkProtection(p -> p.isGrindAllowed(player))) return;
 
         if (event.getRawSlot() != 2 || event.getClick() == ClickType.MIDDLE) return;
 
@@ -36,6 +43,6 @@ public class GrindstoneGrindListener extends GrindListener<BasicItemGrindTable, 
 
         if (source.getEnchantments().size() == result.getEnchantments().size()) return;
 
-        this.giveXP(player, (skill, table) -> table.getItemXP(result, 1));
+        this.giveXP(player, result, GrindContext.create());
     }
 }

@@ -1,47 +1,47 @@
 package su.nightexpress.excellentjobs;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import su.nightexpress.excellentjobs.booster.BoosterManager;
-import su.nightexpress.excellentjobs.booster.command.BoosterCommands;
-import su.nightexpress.excellentjobs.command.impl.BaseCommands;
-import su.nightexpress.excellentjobs.config.Config;
-import su.nightexpress.excellentjobs.config.Keys;
+import org.bukkit.plugin.ServicePriority;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import su.nightexpress.excellentjobs.config.CoreSettings;
 import su.nightexpress.excellentjobs.config.Lang;
 import su.nightexpress.excellentjobs.config.Perms;
-import su.nightexpress.excellentjobs.data.DataHandler;
+import su.nightexpress.excellentjobs.contract.ContractManager;
+import su.nightexpress.excellentjobs.data.Database;
 import su.nightexpress.excellentjobs.grind.GrindManager;
-import su.nightexpress.excellentjobs.grind.GrindRegistry;
-import su.nightexpress.excellentjobs.hook.impl.PlaceholderHook;
 import su.nightexpress.excellentjobs.job.JobManager;
+import su.nightexpress.excellentjobs.level.LevelingManager;
 import su.nightexpress.excellentjobs.stats.StatsManager;
-import su.nightexpress.excellentjobs.stats.command.StatsCommands;
-import su.nightexpress.excellentjobs.user.UserManager;
 import su.nightexpress.excellentjobs.zone.ZoneManager;
 import su.nightexpress.nightcore.NightPlugin;
-import su.nightexpress.nightcore.commands.command.NightCommand;
+import su.nightexpress.nightcore.bridge.permission.PermissionNamespace;
 import su.nightexpress.nightcore.config.PluginDetails;
-import su.nightexpress.nightcore.integration.currency.EconomyBridge;
-import su.nightexpress.nightcore.util.Plugins;
-import su.nightexpress.nightcore.util.blocktracker.PlayerBlockTracker;
+import su.nightexpress.nightcore.userdata.UserDataManager;
 
 public class JobsPlugin extends NightPlugin {
 
-    private DataHandler dataHandler;
-    private UserManager userManager;
+    private final JobsAPIProvider api      = new JobsAPIProvider(this);
+    private final CoreSettings    settings = new CoreSettings();
 
-    private BoosterManager  boosterManager;
-    private GrindManager grindManager;
-    private JobManager      jobManager;
-    private ZoneManager     zoneManager;
-    private StatsManager    statsManager;
+    Database   dataHandler;
+    JobManager jobManager;
+
+    @Nullable
+    GrindManager    grindManager;
+    @Nullable
+    LevelingManager levelingManager;
+    @Nullable
+    ContractManager contractManager;
+
+    @Nullable
+    ZoneManager  zoneManager;
+    @Nullable
+    StatsManager statsManager;
 
     @Override
-    @NotNull
-    protected PluginDetails getDefaultDetails() {
-        return PluginDetails.create("Jobs", new String[]{BaseCommands.JOBS_ALIAS, "job", "excellentjobs"})
-            .setConfigClass(Config.class)
-            .setPermissionsClass(Perms.class);
+    protected @NonNull PluginDetails getDefaultDetails() {
+        return PluginDetails.create("Jobs", new String[]{"jobs", "job", "excellentjobs"});
     }
 
     @Override
@@ -55,128 +55,103 @@ public class JobsPlugin extends NightPlugin {
     }
 
     @Override
+    public PermissionNamespace getCorePermissions() {
+        return Perms.ROOT;
+    }
+
+    @Override
     public void enable() {
-        if (!EconomyBridge.hasCurrency()) {
-            this.error("No currencies are available! Please setup EconomyBridge correctly. Plugin will be disabled.");
-            this.getPluginManager().disablePlugin(this);
-            return;
-        }
+        this.settings.load(this.getEngineConfig());
 
-        this.loadEngine();
+        UserDataManager userDataManager = this.getUserDataManager();
 
-        this.dataHandler = new DataHandler(this);
+        this.dataHandler = new Database(this);
         this.dataHandler.setup();
 
-        this.userManager = new UserManager(this, this.dataHandler);
-        this.userManager.setup();
+        this.jobManager = new JobManager(this, this.dataHandler, userDataManager);
 
-        this.grindManager = new GrindManager(this);
-        this.grindManager.setup();
+        if (this.settings.isGrindEnabled()) {
+            this.loadGrinding(this.jobManager);
+        }
 
-        this.jobManager = new JobManager(this);
+        if (this.settings.isLevelingEnabled()) {
+            this.loadLeveling(userDataManager, this.jobManager);
+        }
+
+        if (this.settings.isContractsEnabled()) {
+            this.loadContracts(this.dataHandler, userDataManager, this.jobManager);
+        }
+
+        if (this.settings.isZonesEnabled()) {
+            this.loadZones(this.jobManager);
+        }
+
+        if (this.settings.isStatsEnabled()) {
+            this.loadStats(this.dataHandler, userDataManager, this.jobManager);
+        }
+
         this.jobManager.setup();
 
-        if (Config.ZONES_ENABLED.get()) {
-            this.zoneManager = new ZoneManager(this);
-            this.zoneManager.setup();
-        }
+        this.registerGlobalPlaceholders();
 
-        if (Config.isStatisticEnabled()) {
-            this.statsManager = new StatsManager(this);
-            this.statsManager.setup();
-        }
-
-        if (Config.isBoostersEnabled()) {
-            this.boosterManager = new BoosterManager(this);
-            this.boosterManager.setup();
-        }
-
-        if (Config.ABUSE_TRACK_PLAYER_BLOCKS.get()) {
-            PlayerBlockTracker.initialize();
-            PlayerBlockTracker.BLOCK_FILTERS.add(block -> true);
-        }
-
-        if (Plugins.hasPlaceholderAPI()) {
-            PlaceholderHook.setup(this);
-        }
-
-        this.loadCommands();
+        this.getServer().getServicesManager().register(JobsAPIProvider.class, this.api, this,
+            ServicePriority.Normal
+        );
     }
 
     @Override
     public void disable() {
-        if (Plugins.hasPlaceholderAPI()) {
-            PlaceholderHook.shutdown();
-        }
-
-        if (this.boosterManager != null) this.boosterManager.shutdown();
-        if (this.zoneManager != null) this.zoneManager.shutdown();
         if (this.statsManager != null) this.statsManager.shutdown();
-        if (this.jobManager != null) this.jobManager.shutdown();
+        if (this.zoneManager != null) this.zoneManager.shutdown();
+        if (this.levelingManager != null) this.levelingManager.shutdown();
         if (this.grindManager != null) this.grindManager.shutdown();
+        if (this.contractManager != null) this.contractManager.shutdown();
+        if (this.jobManager != null) this.jobManager.shutdown();
 
-        this.userManager.shutdown();
         this.dataHandler.shutdown();
-
-        JobsAPI.clear();
-        Keys.clear();
     }
 
-    private void loadEngine() {
-        JobsAPI.load(this);
-        Keys.load(this);
+    private void loadGrinding(JobManager jobManager) {
+        GrindManager manager = new GrindManager(this, jobManager);
+        manager.setup();
+
+        this.grindManager = manager;
     }
 
-    private void loadCommands() {
-        this.rootCommand = NightCommand.forPlugin(this, builder -> {
-            BaseCommands.load(this, builder);
+    private void loadLeveling(UserDataManager userManager, JobManager jobManager) {
+        LevelingManager manager = new LevelingManager(this, userManager, jobManager);
+        manager.setup();
 
-            if (this.boosterManager != null) {
-                BoosterCommands.load(this, this.boosterManager, builder);
-            }
-            if (this.statsManager != null) {
-                StatsCommands.load(this, this.statsManager, builder);
-            }
-        });
+        this.levelingManager = manager;
     }
 
-    @NotNull
-    public DataHandler getDataHandler() {
-        return this.dataHandler;
+    private void loadContracts(Database database, UserDataManager userManager, JobManager jobManager) {
+        ContractManager manager = new ContractManager(this, database, userManager, jobManager);
+        manager.setup();
+
+        this.contractManager = manager;
     }
 
-    @NotNull
-    public UserManager getUserManager() {
-        return this.userManager;
+    private void loadZones(JobManager jobManager) {
+        ZoneManager manager = new ZoneManager(this, jobManager);
+        manager.setup();
+
+        this.zoneManager = manager;
     }
 
-    @Nullable
-    public BoosterManager getBoosterManager() {
-        return this.boosterManager;
+    private void loadStats(Database database, UserDataManager userManager, JobManager jobManager) {
+        StatsManager manager = new StatsManager(this, database, userManager, jobManager);
+        manager.setup();
+
+        this.statsManager = manager;
     }
 
-    @NotNull
-    public GrindManager getGrindManager() {
-        return this.grindManager;
-    }
-
-    @NotNull
-    public GrindRegistry getGrindRegistry() {
-        return this.grindManager.getGrindRegistry();
-    }
-
-    @NotNull
     public JobManager getJobManager() {
         return this.jobManager;
     }
 
-    @Nullable
-    public ZoneManager getZoneManager() {
-        return this.zoneManager;
-    }
-
-    @Nullable
-    public StatsManager getStatsManager() {
-        return this.statsManager;
+    @Override
+    public @NonNull String getPlaceholderAPIIdentifier() {
+        return "excellentjobs";
     }
 }

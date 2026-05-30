@@ -12,18 +12,19 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
 import su.nightexpress.excellentjobs.zone.ZoneManager;
-import su.nightexpress.excellentjobs.zone.impl.Selection;
-import su.nightexpress.excellentjobs.zone.impl.Zone;
+import su.nightexpress.excellentjobs.zone.selection.Selection;
 import su.nightexpress.nightcore.manager.AbstractListener;
 
+@NullMarked
 public class SelectionZoneListener extends AbstractListener<JobsPlugin> {
 
     private final ZoneManager manager;
 
-    public SelectionZoneListener(@NotNull JobsPlugin plugin, @NotNull ZoneManager manager) {
+    public SelectionZoneListener(JobsPlugin plugin, ZoneManager manager) {
         super(plugin);
         this.manager = manager;
     }
@@ -62,11 +63,6 @@ public class SelectionZoneListener extends AbstractListener<JobsPlugin> {
         ItemStack itemStack = event.getItemDrop().getItemStack();
         if (this.manager.isCuboidWand(itemStack)) {
             this.manager.exitSelection(player);
-
-            Zone zone = this.manager.getZoneByWandItem(itemStack);
-            if (zone != null) {
-                this.manager.openEditor(player, zone);
-            }
 
             itemStack.setAmount(0);
             event.setCancelled(true);

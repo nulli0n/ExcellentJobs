@@ -1,31 +1,37 @@
 package su.nightexpress.excellentjobs.grind.adapter.impl;
 
+import org.bukkit.inventory.ItemStack;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import com.oheers.fish.EvenMoreFish;
 import com.oheers.fish.api.EMFAPI;
 import com.oheers.fish.fishing.items.Fish;
-import io.lumine.mythic.api.mobs.MythicMob;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.grind.adapter.AbstractGrindAdapter;
 
+@NullMarked
 public class EvenMoreFishAdapter extends AbstractGrindAdapter<Fish, ItemStack> {
 
-    private static final EMFAPI API = EvenMoreFish.getInstance().getApi();
+    private static final EMFAPI API       = EvenMoreFish.getInstance().getApi();
     private static final String DELIMITER = ":";
 
-    public EvenMoreFishAdapter(@NotNull String name) {
-        super(name);
+    public EvenMoreFishAdapter(String name) {
+        super(name, "evenmorefish");
     }
 
     @Override
-    public boolean canHandle(@NotNull ItemStack itemStack) {
+    public boolean canHandle(ItemStack itemStack) {
         return API.isFish(itemStack);
     }
 
     @Override
-    @Nullable
-    public Fish getTypeByName(@NotNull String name) {
+    public int getPriority() {
+        return 1;
+    }
+
+    @Override
+    public @Nullable Fish adaptFromName(String name) {
         String[] split = name.split(DELIMITER);
         if (split.length < 2) return null;
 
@@ -33,20 +39,12 @@ public class EvenMoreFishAdapter extends AbstractGrindAdapter<Fish, ItemStack> {
     }
 
     @Override
-    @Nullable
-    public Fish getType(@NotNull ItemStack itemStack) {
+    public @Nullable Fish adaptFromBukkit(ItemStack itemStack) {
         return API.getFish(itemStack);
     }
 
     @Override
-    @NotNull
-    public String getName(@NotNull Fish fish) {
+    public String getInternalName(Fish fish) {
         return fish.getRarity().getId() + DELIMITER + fish.getName();
-    }
-
-    @Override
-    @NotNull
-    public String toFullNameOfType(@NotNull Fish fish) {
-        return "evenmorefish:" + super.toFullNameOfType(fish);
     }
 }

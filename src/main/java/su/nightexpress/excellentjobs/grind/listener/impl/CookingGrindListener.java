@@ -7,19 +7,26 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockCookEvent;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.grind.GrindProtection;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
 import su.nightexpress.excellentjobs.grind.GrindManager;
+import su.nightexpress.excellentjobs.grind.context.impl.CookingGrindContext;
 import su.nightexpress.excellentjobs.grind.listener.GrindListener;
-import su.nightexpress.excellentjobs.grind.table.impl.CookingGrindTable;
-import su.nightexpress.excellentjobs.grind.type.impl.CookingGrindType;
-import su.nightexpress.excellentjobs.job.workstation.Workstation;
-import su.nightexpress.excellentjobs.job.workstation.WorkstationMode;
+import su.nightexpress.excellentjobs.grind.workstation.Workstation;
+import su.nightexpress.excellentjobs.grind.workstation.WorkstationMode;
 
-public class CookingGrindListener extends GrindListener<CookingGrindTable, CookingGrindType> {
+@NullMarked
+public class CookingGrindListener extends GrindListener<ItemStack> {
 
-    public CookingGrindListener(@NotNull JobsPlugin plugin, @NotNull GrindManager grindManager, @NotNull CookingGrindType grindType) {
-        super(plugin, grindManager, grindType);
+    public CookingGrindListener(JobsPlugin plugin,
+                                GrindManager manager,
+                                @Nullable GrindProtection protection,
+                                GrindType<ItemStack> type) {
+        super(plugin, manager, protection, type);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -30,16 +37,16 @@ public class CookingGrindListener extends GrindListener<CookingGrindTable, Cooki
 
         TileState tile = workstation.getBackend();
 
-        Player player = this.plugin.getJobManager().getWorkstationOwner(tile);
+        Player player = this.manager.getWorkstationOwner(tile);
         if (player == null) return;
 
-        if (!this.grindManager.canGrinding(player)) return;
+        if (this.protection != null && !this.protection.isGrindAllowed(player)) return;
 
         ItemStack ingredient = event.getSource();
-        WorkstationMode mode = this.plugin.getJobManager().getWorkstationMode(tile);
+        WorkstationMode mode = this.manager.getWorkstationMode(tile);
 
-        this.giveXP(player, (skill, table) -> {
-            return table.getIngredientXP(ingredient, mode == WorkstationMode.AUTO);
-        });
+        CookingGrindContext context = new CookingGrindContext(1, mode == WorkstationMode.AUTO);
+
+        this.giveXP(player, ingredient, context);
     }
 }

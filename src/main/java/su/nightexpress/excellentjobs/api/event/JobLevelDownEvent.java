@@ -2,25 +2,27 @@ package su.nightexpress.excellentjobs.api.event;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
-import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentjobs.user.JobUser;
-import su.nightexpress.excellentjobs.data.impl.JobData;
+import org.jspecify.annotations.NullMarked;
 
+import su.nightexpress.excellentjobs.job.data.JobData;
+import su.nightexpress.excellentjobs.job.model.Job;
+
+@NullMarked
 public class JobLevelDownEvent extends JobLevelEvent {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
-    public JobLevelDownEvent(@NotNull Player player, @NotNull JobUser user, @NotNull JobData data, int oldLevel) {
-        super(player, user, data, oldLevel);
+    public JobLevelDownEvent(Player player, Job job, JobData data, int oldLevel) {
+        super(player, job, data, oldLevel);
     }
 
     public static HandlerList getHandlerList() {
         return HANDLER_LIST;
     }
 
-    @NotNull
+
     @Override
     public HandlerList getHandlers() {
-        return HANDLER_LIST;
+        return getHandlerList();
     }
 }

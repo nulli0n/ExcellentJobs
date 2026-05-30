@@ -1,16 +1,18 @@
 package su.nightexpress.excellentjobs.api.event;
 
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentjobs.data.impl.JobData;
-import su.nightexpress.excellentjobs.user.JobUser;
+import org.jspecify.annotations.NullMarked;
 
+import su.nightexpress.excellentjobs.job.data.JobData;
+import su.nightexpress.excellentjobs.job.model.Job;
+
+@NullMarked
 public abstract class JobLevelEvent extends JobDataEvent {
 
     protected final int oldLevel;
 
-    public JobLevelEvent(@NotNull Player player, @NotNull JobUser user, @NotNull JobData jobData, int oldLevel) {
-        super(player, user, jobData);
+    protected JobLevelEvent(Player player, Job job, JobData jobData, int oldLevel) {
+        super(player, job, jobData);
         this.oldLevel = oldLevel;
     }
 

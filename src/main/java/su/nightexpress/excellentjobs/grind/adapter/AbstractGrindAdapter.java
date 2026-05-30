@@ -1,46 +1,82 @@
 package su.nightexpress.excellentjobs.grind.adapter;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-public abstract class AbstractGrindAdapter<I, O> implements GrindAdapter<I, O> {
+import su.nightexpress.excellentjobs.api.grind.GrindAdapter;
+import su.nightexpress.nightcore.util.LowerCase;
+
+@NullMarked
+public abstract class AbstractGrindAdapter<R, B> implements GrindAdapter<B> {
+
+    protected static final String KEY_DELIMITER = ":";
 
     protected final String name;
-    //protected final String key;
+    protected final String namespace;
 
-    public AbstractGrindAdapter(@NotNull String name/*, @NotNull String key*/) {
-        this.name = name.toLowerCase();
-        //this.key = key;
+    protected AbstractGrindAdapter(String name, String key) {
+        this.name = LowerCase.INTERNAL.apply(name);
+        this.namespace = LowerCase.INTERNAL.apply(key);
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public boolean isCaseSensetive() {
+        return false;
+    }
+
+    @Override
+    public String getId() {
         return this.name;
     }
 
-    /*@Override
-    @NotNull
-    public String getKey() {
-        return this.key;
-    }*/
-
-    @Nullable
-    public String toFullNameOfEntity(@NotNull O entity) {
-        I type = this.getType(entity);
-        if (type == null) return null;
-
-        return this.toFullNameOfType(type);
+    public String getNamespace() {
+        return this.namespace;
     }
 
-    @NotNull
-    public String toFullNameOfType(@NotNull I type) {
-        return this.getName(type);
+    private String adaptToLowerCase(String name) {
+        return this.isCaseSensetive() ? name : LowerCase.INTERNAL.apply(name);
     }
 
-    @NotNull
-    public String toFullName(@NotNull String name) {
-        I type = this.getTypeByName(name);
-        return type == null ? name : this.toFullNameOfType(type);
+    @Override
+    public boolean canHandle(String serializedName) {
+        String[] split = serializedName.split(KEY_DELIMITER);
+        if (split.length < 2) {
+            String internalName = this.adaptToLowerCase(split[0]);
+            return this.adaptFromName(internalName) != null;
+        }
+
+        String parsedKey = split[0];
+        if (!this.namespace.equalsIgnoreCase(parsedKey)) return false;
+
+        String internalName = this.adaptToLowerCase(split[1]);
+        return this.adaptFromName(internalName) != null;
+    }
+
+
+    public abstract String getInternalName(@NonNull R type);
+
+    public abstract @Nullable R adaptFromName(String internalName);
+
+    public abstract @Nullable R adaptFromBukkit(@NonNull B entity);
+
+    public @Nullable String serializeFromBukkit(@NonNull B bukkit) {
+        R real = this.adaptFromBukkit(bukkit);
+        if (real == null) return null;
+
+        return this.serializeFromType(real);
+    }
+
+    public String serializeFromType(@NonNull R real) {
+        String internalName = this.getInternalName(real);
+
+        return this.namespace + KEY_DELIMITER + internalName;
+    }
+
+    public String serializeFromName(String internalName) {
+        String adaptedName = this.adaptToLowerCase(internalName);
+
+        R real = this.adaptFromName(adaptedName);
+        return real == null ? adaptedName : this.serializeFromType(real);
     }
 }

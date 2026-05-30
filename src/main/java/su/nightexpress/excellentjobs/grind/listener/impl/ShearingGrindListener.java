@@ -5,26 +5,32 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerShearEntityEvent;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.grind.GrindContext;
+import su.nightexpress.excellentjobs.api.grind.GrindProtection;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
 import su.nightexpress.excellentjobs.grind.GrindManager;
 import su.nightexpress.excellentjobs.grind.listener.GrindListener;
-import su.nightexpress.excellentjobs.grind.table.impl.BasicEntityGrindTable;
-import su.nightexpress.excellentjobs.grind.type.impl.BasicEntityGrindType;
 
-public class ShearingGrindListener extends GrindListener<BasicEntityGrindTable, BasicEntityGrindType> {
+@NullMarked
+public class ShearingGrindListener extends GrindListener<Entity> {
 
-    public ShearingGrindListener(@NotNull JobsPlugin plugin, @NotNull GrindManager grindManager, @NotNull BasicEntityGrindType grindType) {
-        super(plugin, grindManager, grindType);
+    public ShearingGrindListener(JobsPlugin plugin,
+                                 GrindManager manager,
+                                 @Nullable GrindProtection protection,
+                                 GrindType<Entity> type) {
+        super(plugin, manager, protection, type);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onShear(PlayerShearEntityEvent event) {
         Player player = event.getPlayer();
-        if (!this.grindManager.canGrinding(player)) return;
-
         Entity entity = event.getEntity();
+        if (!this.checkProtection(p -> p.isGrindAllowed(player) && !p.isArtificalMob(entity))) return;
 
-        this.giveXP(player, (job, table) -> table.getMobReward(entity));
+        this.giveXP(player, entity, GrindContext.create());
     }
 }

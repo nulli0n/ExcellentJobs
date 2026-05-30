@@ -1,340 +1,206 @@
 package su.nightexpress.excellentjobs.job.menu;
 
+import static su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers.BOLD;
+import static su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers.GRAY;
+import static su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers.SOFT_YELLOW;
+import static su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers.UNDERLINED;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.MenuType;
-import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentjobs.JobsAPI;
+import org.jspecify.annotations.NullMarked;
+
+import su.nightexpress.excellentjobs.JobsPlaceholders;
 import su.nightexpress.excellentjobs.JobsPlugin;
-import su.nightexpress.excellentjobs.api.booster.MultiplierType;
-import su.nightexpress.excellentjobs.config.Config;
-import su.nightexpress.excellentjobs.data.impl.JobData;
-import su.nightexpress.excellentjobs.data.impl.JobLimitData;
-import su.nightexpress.excellentjobs.job.impl.Job;
-import su.nightexpress.excellentjobs.job.impl.JobState;
-import su.nightexpress.excellentjobs.user.JobUser;
-import su.nightexpress.excellentjobs.util.JobUtils;
-import su.nightexpress.nightcore.bridge.currency.Currency;
-import su.nightexpress.nightcore.config.ConfigValue;
+import su.nightexpress.excellentjobs.job.JobManager;
+import su.nightexpress.excellentjobs.job.dialog.JobDialogKeys;
+import su.nightexpress.excellentjobs.job.model.Job;
+import su.nightexpress.excellentjobs.job.model.JobDefinition;
 import su.nightexpress.nightcore.config.FileConfig;
-import su.nightexpress.nightcore.config.Writeable;
-import su.nightexpress.nightcore.core.config.CoreLang;
-import su.nightexpress.nightcore.integration.currency.EconomyBridge;
-import su.nightexpress.nightcore.ui.menu.MenuViewer;
-import su.nightexpress.nightcore.ui.menu.data.ConfigBased;
-import su.nightexpress.nightcore.ui.menu.data.Filled;
-import su.nightexpress.nightcore.ui.menu.data.MenuFiller;
-import su.nightexpress.nightcore.ui.menu.data.MenuLoader;
-import su.nightexpress.nightcore.ui.menu.item.MenuItem;
-import su.nightexpress.nightcore.ui.menu.type.NormalMenu;
+import su.nightexpress.nightcore.configuration.codec.ConfigCodecs;
+import su.nightexpress.nightcore.ui.inventory.action.ActionContext;
+import su.nightexpress.nightcore.ui.inventory.item.ItemState;
+import su.nightexpress.nightcore.ui.inventory.item.MenuItem;
+import su.nightexpress.nightcore.ui.inventory.menu.AbstractMenu;
+import su.nightexpress.nightcore.ui.inventory.viewer.MenuViewer;
+import su.nightexpress.nightcore.ui.inventory.viewer.ViewerContext;
 import su.nightexpress.nightcore.util.Lists;
-import su.nightexpress.nightcore.util.NumberUtil;
-import su.nightexpress.nightcore.util.bukkit.NightItem;
+import su.nightexpress.nightcore.util.format.adaptive.AdaptiveFormatter;
+import su.nightexpress.nightcore.util.placeholder.CommonPlaceholders;
+import su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers;
 
-import java.util.*;
-import java.util.stream.IntStream;
+@NullMarked
+public class JobsMenu extends AbstractMenu {
 
-import static su.nightexpress.excellentjobs.Placeholders.*;
-import static su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers.*;
+    private static final String DEFAULT_TITLE = "Jobs";
+    private static final String DEFAULT_NAME  = TagWrappers.WHITE.wrap(JobsPlaceholders.JOB_NAME);
 
-public class JobsMenu extends NormalMenu<JobsPlugin> implements Filled<Job>, ConfigBased {
+    private static final List<String> DEFAULT_JOIN_LORE = Lists.newList(
+        JobsPlaceholders.JOB_DESCRIPTION,
+        CommonPlaceholders.EMPTY_IF_ABOVE,
+        TagWrappers.WHITE.wrap(TagWrappers.SPRITE_ITEM.apply(Material.PAPER)) + " " +
+            TagWrappers.COLOR.with("#15A2E8").and(BOLD).wrap("Statistics:"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("Employees:") + " " +
+            TagWrappers.COLOR.with("#15A2E8").wrap("{employees}"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("You Top:") + " " +
+            TagWrappers.COLOR.with("#15A2E8").wrap("Join to start compete!"),
+        "",
+        "<if_can_join>" +
+            SOFT_YELLOW.wrap("→ " + UNDERLINED.wrap("Click to select contract")) +
+            "</if_can_join>",
+        "<if_can_not_join>" +
+            TagWrappers.SOFT_RED.wrap("→ " + UNDERLINED.wrap("You can't join this job")) +
+            "</if_can_not_join>"
+    );
 
-    private static final String FILE_NAME = "job_browse.yml";
+    private static final List<String> DEFAULT_MANAGE_LORE = Lists.newList(
+        JobsPlaceholders.JOB_DESCRIPTION,
+        CommonPlaceholders.EMPTY_IF_ABOVE,
+        TagWrappers.WHITE.wrap(TagWrappers.SPRITE_ITEM.apply(Material.PAPER)) + " " +
+            TagWrappers.COLOR.with("#15A2E8").and(BOLD).wrap("Statistics:"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("Employees:") + " " +
+            TagWrappers.COLOR.with("#15A2E8").wrap("{employees}"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("You Top:") + " " +
+            TagWrappers.COLOR.with("#15A2E8").wrap("#{top_level_position}"),
+        "",
+        TagWrappers.WHITE.wrap(TagWrappers.SPRITE_ITEM.apply(Material.EXPERIENCE_BOTTLE)) + " " +
+            TagWrappers.COLOR.with("#A8E815").and(BOLD).wrap("Leveling:"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("XP:") + " " +
+            TagWrappers.COLOR.with("#A8E815").wrap("{xp}" + GRAY.wrap("/") + "{xp_required}"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("Level:") + " " +
+            TagWrappers.COLOR.with("#A8E815").wrap("{level}" + GRAY.wrap("/") + "{max_level}"),
+        "",
+        TagWrappers.WHITE.wrap(TagWrappers.SPRITE_ITEM.apply(Material.BOOK)) + " " +
+            TagWrappers.COLOR.with("#E8152E").and(BOLD).wrap("Contract:"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("Current:") + " " +
+            TagWrappers.COLOR.with("#E8152E").wrap("{contract_name}"),
+        TagWrappers.DARK_GRAY.wrap(" » ") + GRAY.wrap("Points:") + " " +
+            TagWrappers.COLOR.with("#E8152E").wrap("{contract_points}"),
+        "",
+        TagWrappers.GOLD.wrap("→ " + UNDERLINED.wrap("Click to manage"))
+    );
 
-    private static final String PLACEHOLDER_STATE  = "%state%";
-    private static final String DAILY_LIMITS       = "%daily_limits%";
+    private final JobManager             manager;
+    private final AdaptiveFormatter<Job> formatter;
 
-    private String       jobNameAvailable;
-    private List<String> jobLoreAvailable;
-    private String       jobNameLockedPerm;
-    private List<String> jobLoreLockedPerm;
+    private String       jobName       = DEFAULT_NAME;
+    private List<String> jobJoinLore   = DEFAULT_JOIN_LORE;
+    private List<String> jobManageLore = DEFAULT_MANAGE_LORE;
 
-    private Map<JobState, List<String>> jobStateInfo;
-
-    private List<String> jobDailyLimits;
-    private List<String> jobDailyCurrencyLimit;
-    private List<String> jobDailyXPLimit;
-
-    private boolean              gridAuto;
-    private int[]                gridAutoSlots;
-    private int                  gridCustomPages;
-    private Map<String, JobSlot> gridCustomSlots;
-
-    public JobsMenu(@NotNull JobsPlugin plugin) {
-        super(plugin, MenuType.GENERIC_9X5, BLACK.wrap(BOLD.wrap("Jobs")));
-
-        this.load(FileConfig.loadOrExtract(plugin, Config.DIR_MENU, FILE_NAME));
+    public JobsMenu(JobsPlugin plugin, JobManager manager, AdaptiveFormatter<Job> formatter) {
+        super(plugin, MenuType.GENERIC_9X6, DEFAULT_TITLE);
+        this.manager = manager;
+        this.formatter = formatter;
     }
 
     @Override
-    public void onPrepare(@NotNull MenuViewer viewer, @NotNull InventoryView view) {
-        if (!this.gridAuto) {
-            viewer.setPages(this.gridCustomPages);
-        }
-
-        this.autoFill(viewer);
-    }
-
-    @Override
-    protected void onReady(@NotNull MenuViewer menuViewer, @NotNull Inventory inventory) {
+    public void registerActions() {
 
     }
 
     @Override
-    @NotNull
-    public MenuFiller<Job> createFiller(@NotNull MenuViewer viewer) {
-        Player player = viewer.getPlayer();
+    public void registerConditions() {
 
-        return MenuFiller.builder(this)
-            .setSlots(this.gridAutoSlots)
-            .setItems(plugin.getJobManager().getJobs().stream().sorted(Comparator.comparing(Job::getName)).toList())
-            .setItemCreator(job -> {
-                return this.replaceJobItem(player, job);
-            })
-            .setItemClick(job -> (viewer1, event) -> {
-                this.onJobClick(viewer1, job);
-            })
-            .build();
     }
 
     @Override
-    public void autoFill(@NotNull MenuViewer viewer) {
-        if (this.gridAuto) {
-            Filled.super.autoFill(viewer);
-            return;
-        }
+    public void defineDefaultLayout() {
+        this.addBackgroundItem(Material.GRAY_STAINED_GLASS_PANE, IntStream.range(0, 45).toArray());
+        this.addBackgroundItem(Material.BLACK_STAINED_GLASS_PANE, IntStream.range(45, 54).toArray());
 
-        Player player = viewer.getPlayer();
-        int page = viewer.getPage();
+        this.addNextPageButton(50);
+        this.addPreviousPageButton(48);
+    }
 
-        this.plugin.getJobManager().getJobs().forEach(job -> {
-            JobSlot slot = this.gridCustomSlots.get(job.getId());
-            if (slot == null || slot.page != page) return;
+    @Override
+    protected void onLoad(FileConfig config) {
+        this.jobName = config.getOrSet("Job.Name", ConfigCodecs.STRING, DEFAULT_NAME);
+        this.jobJoinLore = config.getOrSet("Job.Lore.Join", ConfigCodecs.STRING_LIST, DEFAULT_JOIN_LORE);
+        this.jobManageLore = config.getOrSet("Job.Lore.Manage", ConfigCodecs.STRING_LIST, DEFAULT_MANAGE_LORE);
+    }
 
-            NightItem item = this.replaceJobItem(player, job);
-            MenuItem menuItem = item.toMenuItem().setSlots(slot.slots).setPriority(100).setHandler((viewer1, event) -> {
-                this.onJobClick(viewer1, job);
-            }).build();
+    @Override
+    protected void onClick(ViewerContext context, InventoryClickEvent event) {
 
-            viewer.addItem(menuItem);
+    }
+
+    @Override
+    protected void onClose(ViewerContext context, InventoryCloseEvent event) {
+
+    }
+
+    @Override
+    protected void onDrag(ViewerContext context, InventoryDragEvent event) {
+
+    }
+
+    @Override
+    public void onPrepare(ViewerContext context, InventoryView view, Inventory inventory, List<MenuItem> items) {
+        Player player = context.getPlayer();
+        MenuViewer viewer = context.getViewer();
+
+        viewer.setTotalPages(this.manager.getSettings().getJobsMenuPages());
+        int page = viewer.getCurrentPage();
+
+        this.manager.getJobs().forEach(job -> {
+            JobDefinition definition = job.getDefinition();
+            if (definition.getMenuPage() != page) return;
+
+            boolean isEmployed = this.manager.isEmployed(player, job);
+            List<String> lore = isEmployed ? this.jobManageLore : this.jobJoinLore;
+            List<String> formatted = new ArrayList<>();
+
+            for (String line : lore) {
+                String lineFormatted = this.formatter.formatLine(line, job, player);
+                if (lineFormatted.isEmpty() && !line.isEmpty()) continue;
+
+                formatted.add(lineFormatted);
+            }
+
+            MenuItem menuItem = MenuItem.custom()
+                .defaultState(ItemState.builder()
+                    .icon(job.getIcon()
+                        .setDisplayName(this.jobName)
+                        .setLore(formatted)
+                        .hideAllComponents()
+                        .replace(ctx -> ctx.with(job.placeholders()))
+                    )
+                    .action(ctx -> this.handleJob(ctx, job))
+                    .build()
+                )
+                .slots(definition.getMenuSlots())
+                .build();
+
+            items.add(menuItem);
         });
     }
 
-    private void onJobClick(MenuViewer viewer, @NotNull Job job) {
-        Player player = viewer.getPlayer();
+    @Override
+    public void onReady(ViewerContext context, InventoryView view, Inventory inventory) {
 
-        if (!job.hasPermission(player)) {
-            CoreLang.ERROR_NO_PERMISSION.message().send(player);
-            return;
-        }
-
-        this.runNextTick(() -> this.plugin.getJobManager().openLevelsMenu(player, job));
-    }
-
-    private NightItem replaceJobItem(@NotNull Player player, @NotNull Job job) {
-        JobUser user = plugin.getUserManager().getOrFetch(player);
-        JobData jobData = user.getData(job);
-        JobLimitData limitData = jobData.getLimitDataUpdated();
-        JobState state = jobData.getState();
-
-        int level = jobData.getLevel();
-        double xpBoost = JobsAPI.getBoostPercent(player, job, MultiplierType.XP);
-        double payBoost = JobsAPI.getBoostPercent(player, job, MultiplierType.INCOME);
-
-        double xpMod = jobData.getXPBonus() * 100D;
-        double payMod = jobData.getIncomeBonus() * 100D;
-
-        double xpGain = xpMod + xpBoost;
-        double payGain = payMod + payBoost;
-
-        boolean hasAccess = job.hasPermission(player);
-        List<String> lore;
-        String name;
-        if (hasAccess) {
-            name = this.jobNameAvailable;
-            lore = new ArrayList<>(this.jobLoreAvailable);
-        }
-        else {
-            name = this.jobNameLockedPerm;
-            lore = new ArrayList<>(this.jobLoreLockedPerm);
-        }
-
-
-        List<String> dailyLimits = new ArrayList<>();
-        List<String> currencyLimits = new ArrayList<>();
-        List<String> xpLimits = new ArrayList<>();
-        if (job.hasDailyXPLimit(level)) {
-            xpLimits = new ArrayList<>(this.jobDailyXPLimit);
-            xpLimits.replaceAll(str -> str
-                .replace(GENERIC_CURRENT, NumberUtil.format(limitData.getXPEarned()))
-                .replace(GENERIC_TOTAL, NumberUtil.format(job.getDailyXPLimit(level)))
-            );
-        }
-        if (!job.getDailyPaymentLimits().isEmpty()) {
-            currencyLimits = new ArrayList<>();
-            for (String line : this.jobDailyCurrencyLimit) {
-                if (line.contains(CURRENCY_NAME)) {
-                    for (Currency currency : EconomyBridge.getCurrencies()) {
-                        if (!job.hasDailyPaymentLimit(currency, level)) continue;
-
-                        currencyLimits.add(currency.replacePlaceholders().apply(line)
-                            .replace(GENERIC_CURRENT, currency.format(limitData.getCurrencyEarned(currency)))
-                            .replace(GENERIC_TOTAL, currency.format(job.getDailyPaymentLimit(currency, level)))
-                        );
-                    }
-                    continue;
-                }
-                currencyLimits.add(line);
-            }
-        }
-        if (!currencyLimits.isEmpty() || !xpLimits.isEmpty()) {
-            dailyLimits = new ArrayList<>(this.jobDailyLimits);
-            dailyLimits = Lists.replace(dailyLimits, GENERIC_CURRENCY, currencyLimits);
-            dailyLimits = Lists.replace(dailyLimits, GENERIC_XP, xpLimits);
-        }
-
-        List<String> stateInfo = this.jobStateInfo.getOrDefault(state, Collections.emptyList());
-
-        List<String> finalDailyLimits = dailyLimits;
-        return job.getIcon()
-            .hideAllComponents()
-            .setDisplayName(name)
-            .setLore(lore)
-            .replacement(replacer -> replacer
-                .replace(GENERIC_XP_BONUS, JobUtils.formatBonus(xpGain))
-                .replace(GENERIC_XP_MULTIPLIER, NumberUtil.format(xpMod))
-                .replace(GENERIC_XP_BOOST, NumberUtil.format(xpBoost))
-                .replace(GENERIC_INCOME_BONUS, JobUtils.formatBonus(payGain))
-                .replace(GENERIC_INCOME_MULTIPLIER, NumberUtil.format(payMod))
-                .replace(GENERIC_INCOME_BOOST, NumberUtil.format(payBoost))
-                .replace(DAILY_LIMITS, finalDailyLimits)
-                .replace(PLACEHOLDER_STATE, stateInfo)
-                .replace("%order%", Collections.emptyList())
-                .replace("%status%", Collections.emptyList())
-                .replace(jobData.replacePlaceholders())
-                .replace(job.replacePlaceholders())
-            );
-    }
-
-    private static class JobSlot implements Writeable {
-
-        private final int page;
-        private final int[] slots;
-
-        public JobSlot(int page, int[] slots) {
-            this.page = page;
-            this.slots = slots;
-        }
-
-        @NotNull
-        public static JobSlot read(@NotNull FileConfig config, @NotNull String path) {
-            int page = ConfigValue.create(path + ".Page", 1).read(config);
-            int[] slots = ConfigValue.create(path + ".Slots", new int[0]).read(config);
-
-            return new JobSlot(page, slots);
-        }
-
-        @Override
-        public void write(@NotNull FileConfig config, @NotNull String path) {
-            config.set(path + ".Page", this.page);
-            config.setIntArray(path + ".Slots", this.slots);
-        }
     }
 
     @Override
-    public void loadConfiguration(@NotNull FileConfig config, @NotNull MenuLoader loader) {
-        int[] defSlots = new int[]{20,21,22,23,24,31,30,32};
+    public void onRender(ViewerContext context, InventoryView view, Inventory inventory) {
 
-        this.gridAuto = ConfigValue.create("Job.Grid.Auto", false).read(config);
+    }
 
-        this.gridAutoSlots = ConfigValue.create("Job.Grid.AutoSlots", defSlots).read(config);
+    private void handleJob(ActionContext context, Job job) {
+        Player player = context.getPlayer();
+        if (this.manager.isEmployed(player, job)) {
+            this.manager.showJobOptions(player, job);
+            return;
+        }
 
-        this.gridCustomPages = ConfigValue.create("Job.Grid.CustomPages", 1).read(config);
-
-        this.gridCustomSlots = ConfigValue.forMapById("Job.Grid.CustomSlots",
-            JobSlot::read,
-            map -> {
-                int index = 0;
-                for (Job job : plugin.getJobManager().getJobs()) {
-                    int slot = index >= defSlots.length ? -1 : defSlots[index++];
-                    int page = 1;
-                    map.put(job.getId(), new JobSlot(page, new int[]{slot}));
-                }
-            }
-        ).read(config);
-
-        this.jobNameAvailable = ConfigValue.create("Job.Available.Name",
-            SOFT_YELLOW.wrap(BOLD.wrap(JOB_NAME))
-        ).read(config);
-
-        this.jobLoreAvailable = ConfigValue.create("Job.Available.Lore", Lists.newList(
-            PLACEHOLDER_STATE,
-            DARK_GRAY.wrap(GREEN.wrap("✔") + " Workers: " + GRAY.wrap(JOB_EMPLOYEES_TOTAL)),
-            EMPTY_IF_BELOW,
-            JOB_DESCRIPTION,
-            EMPTY_IF_ABOVE,
-            SOFT_YELLOW.wrap(BOLD.wrap("Your Stats:")),
-            SOFT_YELLOW.wrap("▪ " + GRAY.wrap("XP: ") + JOB_DATA_XP + GRAY.wrap("/") + JOB_DATA_XP_MAX),
-            SOFT_YELLOW.wrap("▪ " + GRAY.wrap("Level: ") + JOB_DATA_LEVEL + GRAY.wrap("/") + JOB_DATA_LEVEL_MAX),
-            SOFT_YELLOW.wrap("▪ " + GRAY.wrap("XP Bonus: ") + GENERIC_XP_BONUS) + " " + GRAY.wrap("(" + GENERIC_XP_MULTIPLIER + " + " + GENERIC_XP_BOOST + ")"),
-            SOFT_YELLOW.wrap("▪ " + GRAY.wrap("Income Bonus: ") + GENERIC_INCOME_BONUS) + " " + GRAY.wrap("(" + GENERIC_INCOME_MULTIPLIER + " + " + GENERIC_INCOME_BOOST + ")"),
-            EMPTY_IF_BELOW,
-            DAILY_LIMITS,
-            EMPTY_IF_BELOW,
-            SOFT_YELLOW.wrap("→ " + UNDERLINED.wrap("Click to view levels"))
-        )).read(config);
-
-        this.jobNameLockedPerm = ConfigValue.create("Job.Locked_Permission.Name",
-            RED.wrap("[Locked]") + " " + GRAY.wrap(JOB_NAME)
-        ).read(config);
-
-        this.jobLoreLockedPerm = ConfigValue.create("Job.Locked_Permission.Lore", Lists.newList(
-            GRAY.wrap("Upgrade your " + RED.wrap("/rank") + " to access this job.")
-        )).read(config);
-
-
-
-
-        this.jobDailyLimits = ConfigValue.create("Job.DailyLimits.Header", Lists.newList(
-            SOFT_YELLOW.wrap(BOLD.wrap("Daily Limits:")),
-            GENERIC_CURRENCY,
-            GENERIC_XP
-        )).read(config);
-
-        this.jobDailyCurrencyLimit = ConfigValue.create("Job.DailyLimits.Currency", Lists.newList(
-            SOFT_YELLOW.wrap("• " + GRAY.wrap(CURRENCY_NAME + ": ") + GENERIC_CURRENT + GRAY.wrap("/") + GENERIC_TOTAL)
-        )).read(config);
-
-        this.jobDailyXPLimit = ConfigValue.create("Job.DailyLimits.XP", Lists.newList(
-            SOFT_YELLOW.wrap("• " + GRAY.wrap("XP: ") + GENERIC_CURRENT + GRAY.wrap("/") + GENERIC_TOTAL)
-        )).read(config);
-
-        this.jobStateInfo = ConfigValue.forMapByEnum("Job.StateInfo", JobState.class,
-            (cfg, path, id) -> cfg.getStringList(path),
-            map -> {
-                map.put(JobState.PRIMARY, Lists.newList(DARK_GRAY.wrap(GREEN.wrap("✔") + " This is your " + GRAY.wrap("Primary") + " job.")));
-                map.put(JobState.SECONDARY, Lists.newList(DARK_GRAY.wrap(GREEN.wrap("✔") + " This is your " + GRAY.wrap("Secondary") + " job.")));
-                map.put(JobState.INACTIVE, Lists.newList(DARK_GRAY.wrap(RED.wrap("✘") + " You are " + GRAY.wrap("not an employee") + " of this job.")));
-            }
-        ).read(config);
-
-        loader.addDefaultItem(NightItem.fromType(Material.GRAY_STAINED_GLASS_PANE)
-            .setHideTooltip(true)
-            .toMenuItem()
-            .setPriority(-1)
-            .setSlots(IntStream.range(9, 45).toArray())
-        );
-
-        loader.addDefaultItem(NightItem.fromType(Material.BLACK_STAINED_GLASS_PANE)
-            .setHideTooltip(true)
-            .toMenuItem()
-            .setPriority(-1)
-            .setSlots(0,1,2,3,4,5,6,7,8,36,37,38,39,40,41,42,43,44)
-        );
-
-        loader.addDefaultItem(MenuItem.buildNextPage(this, 35).setPriority(10));
-        loader.addDefaultItem(MenuItem.buildPreviousPage(this, 27).setPriority(10));
+        this.plugin.showDialog(player, JobDialogKeys.JOB_JOIN, job, player::closeInventory);
     }
 }

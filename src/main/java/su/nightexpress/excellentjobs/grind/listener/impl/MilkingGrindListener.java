@@ -8,35 +8,47 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.util.RayTraceResult;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.grind.GrindContext;
+import su.nightexpress.excellentjobs.api.grind.GrindProtection;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
 import su.nightexpress.excellentjobs.grind.GrindManager;
 import su.nightexpress.excellentjobs.grind.listener.GrindListener;
-import su.nightexpress.excellentjobs.grind.table.impl.BasicEntityGrindTable;
-import su.nightexpress.excellentjobs.grind.type.impl.BasicEntityGrindType;
 
-public class MilkingGrindListener extends GrindListener<BasicEntityGrindTable, BasicEntityGrindType> {
+@NullMarked
+public class MilkingGrindListener extends GrindListener<Entity> {
 
-    public MilkingGrindListener(@NotNull JobsPlugin plugin, @NotNull GrindManager grindManager, @NotNull BasicEntityGrindType grindType) {
-        super(plugin, grindManager, grindType);
+    // TODO Add a 5 minute cooldown
+
+    public MilkingGrindListener(JobsPlugin plugin,
+                                GrindManager manager,
+                                @Nullable GrindProtection protection,
+                                GrindType<Entity> type) {
+        super(plugin, manager, protection, type);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMilk(PlayerBucketFillEvent event) {
         Player player = event.getPlayer();
-        if (!this.grindManager.canGrinding(player)) return;
-
         if (event.getItemStack() == null) return;
         if (event.getItemStack().getType() != Material.MILK_BUCKET) return;
 
-        Location eyes = player.getEyeLocation();
         Location location = player.getLocation();
-        RayTraceResult result = player.getWorld().rayTraceEntities(eyes, location.getDirection(), 5D, entity -> !(entity instanceof Player));
+        if (location == null) return;
+
+        Location eyes = player.getEyeLocation();
+        RayTraceResult result = player.getWorld().rayTraceEntities(eyes, location.getDirection(), 5D,
+            entity -> !(entity instanceof Player));
         if (result == null) return;
 
         Entity entity = result.getHitEntity();
         if (entity == null) return;
 
-        this.giveXP(player, (job, table) -> table.getMobReward(entity));
+        if (!this.checkProtection(p -> p.isGrindAllowed(player) && !p.isArtificalMob(entity))) return;
+
+        this.giveXP(player, entity, GrindContext.create());
     }
 }

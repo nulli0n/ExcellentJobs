@@ -1,46 +1,53 @@
 package su.nightexpress.excellentjobs.grind;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import su.nightexpress.nightcore.manager.AbstractManager;
-import su.nightexpress.excellentjobs.JobsPlugin;
-import su.nightexpress.excellentjobs.grind.type.GrindType;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import su.nightexpress.excellentjobs.api.grind.GrindAdapter;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
+import su.nightexpress.excellentjobs.grind.objective.GrindObjective;
+import su.nightexpress.nightcore.util.registry.StringRegistry;
 
-public class GrindRegistry extends AbstractManager<JobsPlugin> {
+@NullMarked
+public class GrindRegistry {
 
-    private final Map<String, GrindType<?>> grindTypeByIdMap;
+    private final StringRegistry<GrindAdapter<?>> adapterRegistry;
+    private final StringRegistry<GrindType<?>>    typeRegistry;
+    private final StringRegistry<GrindObjective>  objectiveRegistry;
 
-    public GrindRegistry(@NotNull JobsPlugin plugin) {
-        super(plugin);
-        this.grindTypeByIdMap = new HashMap<>();
+    public GrindRegistry() {
+        this.adapterRegistry = new StringRegistry<>();
+        this.typeRegistry = new StringRegistry<>();
+        this.objectiveRegistry = new StringRegistry<>();
     }
 
-    @Override
-    protected void onLoad() {
-
+    public void clear() {
+        this.adapterRegistry.clear();
+        this.typeRegistry.clear();
+        this.objectiveRegistry.clear();
     }
 
-    @Override
-    protected void onShutdown() {
-        this.grindTypeByIdMap.clear();
+    public int countObjectives() {
+        return this.objectiveRegistry.size();
     }
 
-    public <T extends GrindType<?>> void registerGrindType(@NotNull T type) {
-        this.grindTypeByIdMap.putIfAbsent(type.getId(), type);
+    public <A extends GrindAdapter<?>> void registerAdapter(A adapter) {
+        this.adapterRegistry.add(adapter.getId(), adapter);
     }
 
-    @Nullable
-    public GrindType<?> getTypeById(@NotNull String id) {
-        return this.grindTypeByIdMap.get(id.toLowerCase());
+    public <T> void registerType(GrindType<T> grindType) {
+        this.typeRegistry.add(grindType.getId(), grindType);
     }
 
-    @NotNull
-    public Set<GrindType<?>> getTypes() {
-        return new HashSet<>(this.grindTypeByIdMap.values());
+    public void registerObjective(String id, GrindObjective objective) {
+        this.objectiveRegistry.add(id, objective);
+    }
+
+    public @Nullable GrindType<?> getType(String id) {
+        return this.typeRegistry.getByKey(id);
+    }
+
+    public @Nullable GrindObjective getObjective(String id) {
+        return this.objectiveRegistry.getByKey(id);
     }
 }

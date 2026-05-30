@@ -1,5 +1,12 @@
 package su.nightexpress.excellentjobs.grind.adapter.impl;
 
+import java.util.Optional;
+
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import net.momirealms.customcrops.api.BukkitCustomCropsAPI;
 import net.momirealms.customcrops.api.CustomCropsAPI;
 import net.momirealms.customcrops.api.core.Registries;
@@ -7,27 +14,20 @@ import net.momirealms.customcrops.api.core.block.CustomCropsBlock;
 import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
 import net.momirealms.customcrops.api.core.world.CustomCropsWorld;
 import net.momirealms.customcrops.api.core.world.Pos3;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import su.nightexpress.excellentjobs.grind.adapter.AbstractGrindAdapter;
 
-import java.util.Optional;
-
+@NullMarked
 public class CustomCropsAdapter extends AbstractGrindAdapter<CustomCropsBlock, Block> {
 
-    public CustomCropsAdapter(@NotNull String name) {
-        super(name);
+    public CustomCropsAdapter(String name) {
+        super(name, "customcrops");
     }
 
-    @NotNull
     private static CustomCropsAPI getAPI() {
         return BukkitCustomCropsAPI.get();
     }
 
-    @NotNull
-    private static Optional<CustomCropsBlockState> getCropState(@NotNull Block block) {
+    private static Optional<CustomCropsBlockState> getCropState(Block block) {
         World world = block.getWorld();
         Pos3 pos = getAPI().adapt(block.getLocation());
 
@@ -38,31 +38,28 @@ public class CustomCropsAdapter extends AbstractGrindAdapter<CustomCropsBlock, B
     }
 
     @Override
-    public boolean canHandle(@NotNull Block block) {
+    public boolean canHandle(Block block) {
         return getCropState(block).isPresent();
     }
 
     @Override
-    @Nullable
-    public CustomCropsBlock getTypeByName(@NotNull String name) {
+    public int getPriority() {
+        return 1;
+    }
+
+    @Override
+    public @Nullable CustomCropsBlock adaptFromName(String name) {
         return Registries.BLOCKS.get(name);
     }
 
     @Override
-    @Nullable
-    public CustomCropsBlock getType(@NotNull Block block) {
-        return getCropState(block).map(CustomCropsBlockState::type).orElse(null);
+    public @Nullable CustomCropsBlock adaptFromBukkit(Block block) {
+        Optional<CustomCropsBlock> optional = getCropState(block).map(CustomCropsBlockState::type);
+        return optional.orElse(null);
     }
 
     @Override
-    @NotNull
-    public String getName(@NotNull CustomCropsBlock customCropsBlock) {
+    public String getInternalName(CustomCropsBlock customCropsBlock) {
         return customCropsBlock.type().asString();
-    }
-
-    @Override
-    @NotNull
-    public String toFullNameOfType(@NotNull CustomCropsBlock customCropsBlock) {
-        return "customcrops:" + super.toFullNameOfType(customCropsBlock);
     }
 }

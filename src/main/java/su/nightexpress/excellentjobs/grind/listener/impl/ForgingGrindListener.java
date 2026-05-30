@@ -7,23 +7,32 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.view.AnvilView;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.grind.GrindContext;
+import su.nightexpress.excellentjobs.api.grind.GrindProtection;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
 import su.nightexpress.excellentjobs.grind.GrindManager;
 import su.nightexpress.excellentjobs.grind.listener.GrindListener;
-import su.nightexpress.excellentjobs.grind.table.impl.BasicItemGrindTable;
-import su.nightexpress.excellentjobs.grind.type.impl.BasicItemGrindType;
 
-public class ForgingGrindListener extends GrindListener<BasicItemGrindTable, BasicItemGrindType> {
+@NullMarked
+public class ForgingGrindListener extends GrindListener<ItemStack> {
 
-    public ForgingGrindListener(@NotNull JobsPlugin plugin, @NotNull GrindManager grindManager, @NotNull BasicItemGrindType grindType) {
-        super(plugin, grindManager, grindType);
+    public ForgingGrindListener(JobsPlugin plugin,
+                                GrindManager manager,
+                                @Nullable GrindProtection protection,
+                                GrindType<ItemStack> type) {
+        super(plugin, manager, protection, type);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onAnvilClick(InventoryClickEvent event) {
         if (!(event.getView() instanceof AnvilView anvil)) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
         if (event.getRawSlot() != 2 || event.getClick() == ClickType.MIDDLE) return;
+        if (!this.checkProtection(p -> p.isGrindAllowed(player))) return;
 
         if (anvil.getRepairCost() <= 0) return;
 
@@ -35,16 +44,13 @@ public class ForgingGrindListener extends GrindListener<BasicItemGrindTable, Bas
 
         if (first.getType() != result.getType() || result.isSimilar(first)) return;
 
-        Player player = (Player) event.getWhoClicked();
-        if (!this.grindManager.canGrinding(player)) return;
-
         ItemStack resultCopy = new ItemStack(result);
 
-        this.plugin.runTask(task -> {
+        this.plugin.runTask(() -> {
             ItemStack updated = anvil.getItem(2);
             if (updated != null && !updated.getType().isAir()) return;
 
-            this.giveXP(player, (job, table) -> table.getItemXP(resultCopy, 1));
+            this.giveXP(player, resultCopy, GrindContext.create());
         });
     }
 }

@@ -1,137 +1,279 @@
 package su.nightexpress.excellentjobs.stats;
 
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentjobs.JobsPlugin;
-import su.nightexpress.excellentjobs.config.Config;
-import su.nightexpress.excellentjobs.job.impl.Job;
-import su.nightexpress.excellentjobs.job.impl.JobState;
-import su.nightexpress.excellentjobs.stats.impl.DayStats;
-import su.nightexpress.excellentjobs.stats.impl.JobStats;
-import su.nightexpress.excellentjobs.stats.impl.TopEntry;
-import su.nightexpress.excellentjobs.stats.listener.StatsListener;
-import su.nightexpress.excellentjobs.stats.menu.StatsMenu;
-import su.nightexpress.excellentjobs.user.JobUser;
-import su.nightexpress.nightcore.manager.AbstractManager;
-
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import su.nightexpress.excellentjobs.JobsFiles;
+import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.event.GrindRewardProceedEvent;
+import su.nightexpress.excellentjobs.api.event.JobMenuDefineLayoutEvent;
+import su.nightexpress.excellentjobs.api.event.StatsLoadTrackersEvent;
+import su.nightexpress.excellentjobs.api.grind.GrindObjectiveProperty;
+import su.nightexpress.excellentjobs.api.grind.GrindReward;
+import su.nightexpress.excellentjobs.api.stats.TopEntry;
+import su.nightexpress.excellentjobs.api.stats.TopTracker;
+import su.nightexpress.excellentjobs.config.Lang;
+import su.nightexpress.excellentjobs.data.Database;
+import su.nightexpress.excellentjobs.job.JobManager;
+import su.nightexpress.excellentjobs.job.model.Job;
+import su.nightexpress.excellentjobs.stats.core.StatsLang;
+import su.nightexpress.excellentjobs.stats.core.StatsSettings;
+import su.nightexpress.excellentjobs.stats.data.StatsDataManager;
+import su.nightexpress.excellentjobs.stats.listener.StatsListener;
+import su.nightexpress.excellentjobs.stats.menu.StatTrackersMenu;
+import su.nightexpress.excellentjobs.stats.menu.TopPlayersMenu;
+import su.nightexpress.excellentjobs.stats.model.JobStats;
+import su.nightexpress.excellentjobs.stats.model.JobTracker;
+import su.nightexpress.nightcore.bridge.placeholder.PlaceholderRegistry;
+import su.nightexpress.nightcore.config.FileConfig;
+import su.nightexpress.nightcore.manager.AbstractManager;
+import su.nightexpress.nightcore.ui.inventory.item.ItemState;
+import su.nightexpress.nightcore.ui.inventory.item.MenuItem;
+import su.nightexpress.nightcore.ui.inventory.menu.AbstractObjectMenu;
+import su.nightexpress.nightcore.userdata.UserDataManager;
+import su.nightexpress.nightcore.util.Lists;
+import su.nightexpress.nightcore.util.LowerCase;
+import su.nightexpress.nightcore.util.bukkit.NightItem;
+import su.nightexpress.nightcore.util.format.adaptive.AdaptiveFormatter;
+import su.nightexpress.nightcore.util.text.night.wrapper.TagWrappers;
+
+@NullMarked
 public class StatsManager extends AbstractManager<JobsPlugin> {
 
-    private final Map<String, List<TopEntry>> levelTopMap;
+    private final JobManager      jobManager;
+    private final UserDataManager userManager;
 
-    private StatsMenu statsMenu;
+    private final StatsSettings    settings;
+    private final StatsDataManager dataManager;
 
-    public StatsManager(@NotNull JobsPlugin plugin) {
+    private final Map<String, TopTracker> trackerMap;
+
+    private StatTrackersMenu trackersMenu;
+    private TopPlayersMenu   topPlayersMenu;
+
+    public StatsManager(JobsPlugin plugin,
+                        Database database,
+                        UserDataManager userManager,
+                        JobManager jobManager) {
         super(plugin);
-        this.levelTopMap = new ConcurrentHashMap<>();
+        this.jobManager = jobManager;
+        this.userManager = userManager;
+
+        this.settings = new StatsSettings();
+        this.dataManager = new StatsDataManager(plugin, database, this.settings);
+
+        this.trackerMap = new ConcurrentHashMap<>();
+
+        this.trackersMenu = new StatTrackersMenu(this.plugin, this);
+        this.topPlayersMenu = new TopPlayersMenu(this.plugin, this);
     }
 
     @Override
     protected void onLoad() {
+        this.plugin.injectLang(StatsLang.class);
+
+        this.loadSettings();
+        this.loadData();
+        this.loadTrackers();
         this.loadUI();
-        this.loadStats();
 
         this.addListener(new StatsListener(this.plugin, this));
 
-        this.addAsyncTask(this::updateJobLevelsAndEmployees, Config.STATISTIC_UPDATE_INTERVAL.get());
+        this.addAsyncTask(this::updateTopTrackers, this.settings.getTopTrackerUpdateInterval());
     }
 
     @Override
     protected void onShutdown() {
+        this.userManager.removeLoginListener(this.dataManager);
+        this.dataManager.shutdown();
+    }
 
+    private void loadSettings() {
+        Path file = this.plugin.dataPath().resolve(StatsFiles.FILE_SETTINGS);
+        FileConfig.load(file).edit(this.settings::load);
+    }
+
+    private void loadData() {
+        this.dataManager.setup();
+        this.userManager.addLoginListener(this.dataManager);
+    }
+
+    private void loadTrackers() {
+        StatsLoadTrackersEvent event = new StatsLoadTrackersEvent(new ArrayList<>());
+        this.plugin.getPluginManager().callEvent(event);
+
+        event.getTrackers().forEach(this::addTopTracker);
+
+        this.plugin.info("Registered %s top trackers.".formatted(this.trackerMap.size()));
     }
 
     private void loadUI() {
-        this.statsMenu = this.addMenu(new StatsMenu(this.plugin), Config.DIR_MENU, "job_stats.yml");
+        Path dir = this.plugin.dataPath().resolve(JobsFiles.DIR_UI);
+
+        this.initMenu(this.trackersMenu, dir.resolve(StatsFiles.UI_TRACKERS));
+        this.initMenu(this.topPlayersMenu, dir.resolve(StatsFiles.UI_TOP_PLAYERS));
     }
 
-    private void loadStats() {
-        this.plugin.runTask(task -> this.plugin.getServer().getOnlinePlayers().forEach(this::loadStats));
+    public boolean hasTrackers() {
+        return !this.trackerMap.isEmpty();
     }
 
-    private void loadStats(@NotNull Player player) {
-        Map<String, JobStats> stats = this.plugin.getDataHandler().getStats(player.getUniqueId());
-        JobUser user = this.plugin.getUserManager().getOrFetch(player);
-        user.loadStats(stats);
+    public @Nullable JobStats getStats(Player player, Job job) {
+        return this.dataManager.getData(player.getUniqueId(), job.getId());
     }
 
-    @NotNull
-    public Map<String, List<TopEntry>> getLevelTopMap() {
-        return this.levelTopMap;
+    public JobStats getStatsOrCreate(Player player, Job job) {
+        return this.dataManager.getDataOrCreateAndCache(player.getUniqueId(), job.getId());
     }
 
-    @NotNull
-    public List<TopEntry> getLevelTopEntries(@NotNull Job job) {
-        return this.getLevelTopEntries(job.getId());
+    public @Nullable TopTracker getTopTracker(String name) {
+        return this.trackerMap.get(LowerCase.INTERNAL.apply(name));
     }
 
-    @NotNull
-    public List<TopEntry> getLevelTopEntries(@NotNull String id) {
-        return this.levelTopMap.getOrDefault(id.toLowerCase(), Collections.emptyList());
+    public Set<TopTracker> getTrackers() {
+        return Set.copyOf(this.trackerMap.values());
     }
 
-    public void handleJoin(@NotNull Player player) {
-        this.plugin.runTaskAsync(task -> this.loadStats(player));
+    public boolean backToJobMenu(Player player, Job job) {
+        return this.jobManager.openJobOptions(player, job);
     }
 
-    public void openStats(@NotNull Player player, @NotNull Job job) {
-        this.statsMenu.open(player, job);
+    public boolean showTrackersMenu(Player player, Job job) {
+        return this.trackersMenu.show(player, job);
     }
 
-    public void addStats(@NotNull Player player, @NotNull Job job, @NotNull Consumer<DayStats> consumer) {
-        JobUser user = plugin.getUserManager().getOrFetch(player);
-        JobStats jobStats = user.getStats(job);
-        DayStats stats = jobStats.getTodayStats();
-
-        consumer.accept(stats);
+    public boolean showTopPlayersMenu(Player player, Job job, TopTracker tracker) {
+        return this.topPlayersMenu.show(player, new JobTracker(job, tracker));
     }
 
-    public void updateJobLevelsAndEmployees() {
-        //this.updateEmployeesAmount();
-        //this.updateTopLevelLeaderboard();
-        this.levelTopMap.clear();
+    public boolean openTrackersOrSingleTopMenu(Player player, Job job) {
+        Set<TopTracker> trackers = this.getTrackers();
+        if (trackers.size() > 1) {
+            return this.showTrackersMenu(player, job);
+        }
 
-        List<JobUser> users = this.plugin.getDataHandler().getUsers();
+        TopTracker tracker = trackers.stream().findFirst().orElse(null);
+        return tracker != null && this.showTopPlayersMenu(player, job, tracker);
+    }
 
-        this.plugin.getJobManager().getJobs().forEach(job -> {
-            for (JobState state : JobState.values()) {
-                if (state == JobState.INACTIVE) continue;
-                int employess = (int) users.stream().filter(user -> user.getData(job).getState() == state).count();
+    public void handleJobMenuDefineLayout(JobMenuDefineLayoutEvent event) {
+        AbstractObjectMenu<Job> jobMenu = event.getJobMenu();
 
-                job.setEmployeesAmount(state, employess);
-            }
+        jobMenu.addDefaultButton("leaderboards", MenuItem.button()
+            .defaultState(ItemState.builder()
+                .icon(NightItem.fromType(Material.GOLD_BLOCK)
+                    .setDisplayName(TagWrappers.GRADIENT.with("#f7971e", "#ffd200").and(TagWrappers.BOLD).wrap(
+                        "Leaderboards"))
+                    .setLore(Lists.newList(
+                        TagWrappers.GRAY.wrap("View and compete with the"),
+                        TagWrappers.GRAY.wrap("best players in this job!"),
+                        "",
+                        TagWrappers.COLOR.with("#ffd200").wrap("→ " + TagWrappers.UNDERLINED.wrap("Click to open"))
+                    ))
+                    .hideAllComponents()
+                )
+                .displayModifier((context, item) -> item.replace(builder -> builder
+                    .with(jobMenu.getObject(context).placeholders())
+                ))
+                .action(context -> {
+                    this.showTrackersMenu(context.getPlayer(), jobMenu.getObject(context));
+                })
+                .condition(context -> this.hasTrackers())
+                .build()
+            )
+            .slots(32)
+            .build()
+        );
+    }
 
-            var topList = this.levelTopMap.computeIfAbsent(job.getId(), k -> new ArrayList<>());
-            AtomicInteger position = new AtomicInteger();
+    public void handleGrindReward(GrindRewardProceedEvent event) {
+        Player player = event.getPlayer();
+        Job job = event.getJob();
+        JobStats stats = this.getStatsOrCreate(player, job);
 
-            users.stream().sorted(Comparator.comparingInt((JobUser user) -> user.getData(job).getLevel()).reversed()).forEach(user -> {
-                topList.add(new TopEntry(user.getName(), user.getData(job).getLevel(), position.incrementAndGet()));
-            });
+        GrindReward reward = event.getReward();
+
+        stats.addIncome(reward.get(GrindObjectiveProperty.INCOME));
+        stats.markDirty();
+    }
+
+    public void updateTopTrackers() {
+        this.getTrackers().forEach(this::updateTopTracker);
+    }
+
+    public void updateTopTracker(TopTracker tracker) {
+        tracker.update();
+    }
+
+    public void addTopTracker(TopTracker tracker) {
+        this.trackerMap.put(LowerCase.INTERNAL.apply(tracker.getId()), tracker);
+
+        this.plugin.addGlobalPlaceholders(registry -> {
+            this.registerTopTrackerPlaceholders(registry, tracker);
         });
     }
 
-//    public void updateEmployeesAmount() {
-//        Map<Job, Map<JobState, Integer>> dataMap = this.plugin.getData().getEmployees();
-//
-//        dataMap.forEach((job, map) -> {
-//            map.forEach(job::setEmployeesAmount);
-//        });
-//    }
-//
-//    public void updateTopLevelLeaderboard() {
-//        Map<Job, Map<String, Integer>> dataMap = this.plugin.getData().getLevels();
-//
-//        this.levelTopMap.clear();
-//
-//        dataMap.forEach((job, userLevelMap) -> {
-//            AtomicInteger count = new AtomicInteger();
-//            Lists.sortDescent(userLevelMap).forEach((name, level) -> {
-//                this.levelTopMap.computeIfAbsent(job.getId(), k -> new ArrayList<>()).add(new TopEntry(name, level, count.incrementAndGet()));
-//            });
-//        });
-//    }
+    private void registerTopTrackerPlaceholders(PlaceholderRegistry registry, TopTracker tracker) {
+        // Dynmaic placeholder for Jobs Browse menu.
+        this.registerJobFormatterTrackerPositionPlaceholder(tracker);
+
+        this.registerGlobalTrackerPositionPlaceholder(tracker, registry);
+        this.registerGlobalTrackerLeaderboardPlaceholders(tracker, 10, registry);
+    }
+
+    private void registerJobFormatterTrackerPositionPlaceholder(TopTracker tracker) {
+        AdaptiveFormatter<Job> formatter = this.jobManager.getJobFormatter();
+
+        String varName = StatsConstants.JOB_FORMATTER_TOP_POSITION_TEMPLATE
+            .formatted(tracker.getId());
+
+        formatter.registerVariable(varName, (job, player) -> {
+            TopEntry entry = tracker.getTop(job, player.getUniqueId());
+            return entry == null ? Lang.OTHER_N_A.text() : String.valueOf(entry.position());
+        });
+    }
+
+    private void registerGlobalTrackerPositionPlaceholder(TopTracker tracker, PlaceholderRegistry registry) {
+        String key = StatsConstants.GLOBAL_POSITION_TEMPLATE.formatted(tracker.getId());
+
+        registry.registerMapped(key, Job.class, (player, job) -> {
+            TopEntry entry = tracker.getTop(job, player.getUniqueId());
+            return entry == null ? Lang.OTHER_N_A.text() : String.valueOf(entry.position());
+        });
+    }
+
+    private void registerGlobalTrackerLeaderboardPlaceholders(TopTracker tracker,
+                                                              int positions,
+                                                              PlaceholderRegistry registry) {
+        String name = tracker.getId();
+        String none = StatsLang.TOP_ENTRY_EMPTY.text();
+
+        for (int count = 0; count < positions; count++) {
+            int position = count + 1;
+            String keyName = StatsConstants.GLOBAL_TOP_NAME_TEMPLATE.formatted(name, position);
+            String keyValue = StatsConstants.GLOBAL_TOP_SCORE_TEMPLATE.formatted(name, position);
+
+            registry.registerMapped(keyName, Job.class, (player, job) -> {
+                TopEntry entry = tracker.getTop(job, position);
+                if (entry == null) return none;
+
+                return entry.user().getName();
+            });
+
+            registry.registerMapped(keyValue, Job.class, (player, job) -> {
+                TopEntry entry = tracker.getTop(job, position);
+                if (entry == null) return none;
+
+                return entry.score();
+            });
+        }
+    }
 }

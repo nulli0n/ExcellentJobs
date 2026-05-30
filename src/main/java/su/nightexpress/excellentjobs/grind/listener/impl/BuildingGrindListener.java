@@ -5,25 +5,32 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import su.nightexpress.excellentjobs.JobsPlugin;
+import su.nightexpress.excellentjobs.api.grind.GrindContext;
+import su.nightexpress.excellentjobs.api.grind.GrindProtection;
+import su.nightexpress.excellentjobs.api.grind.GrindType;
 import su.nightexpress.excellentjobs.grind.GrindManager;
 import su.nightexpress.excellentjobs.grind.listener.GrindListener;
-import su.nightexpress.excellentjobs.grind.table.impl.BasicBlockGrindTable;
-import su.nightexpress.excellentjobs.grind.type.impl.BasicBlockGrindType;
 
-public class BuildingGrindListener extends GrindListener<BasicBlockGrindTable, BasicBlockGrindType> {
+@NullMarked
+public class BuildingGrindListener extends GrindListener<Block> {
 
-    public BuildingGrindListener(@NotNull JobsPlugin plugin, @NotNull GrindManager grindManager, @NotNull BasicBlockGrindType grindType) {
-        super(plugin, grindManager, grindType);
+    public BuildingGrindListener(JobsPlugin plugin,
+                                 GrindManager manager,
+                                 @Nullable GrindProtection protection,
+                                 GrindType<Block> type) {
+        super(plugin, manager, protection, type);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         Block block = event.getBlockPlaced();
         Player player = event.getPlayer();
-        if (!this.grindManager.canGrinding(player)) return;
+        if (this.protection != null && !this.protection.isGrindAllowed(player)) return;
 
-        this.giveXP(player, (job, table) -> table.getBlockXP(block));
+        this.giveXP(player, block, GrindContext.create());
     }
 }
