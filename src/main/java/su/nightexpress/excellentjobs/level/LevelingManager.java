@@ -277,6 +277,18 @@ public class LevelingManager extends AbstractManager<JobsPlugin> {
         return this.openLevelsMenu(player, job, data);
     }
 
+    public int countTotalLevel(Player player) {
+        return this.jobManager.getAllJobs(player).stream()
+            .mapToInt(info -> info.data().getLevel())
+            .sum();
+    }
+
+    public int countTotalEffectiveLevel(Player player) {
+        return this.jobManager.getActiveJobs(player).stream()
+            .mapToInt(info -> info.data().getLevel())
+            .sum();
+    }
+
     public int getMaxLevel(Job job) {
         JobLeveling leveling = job.getLeveling();
         if (leveling == null) return LevelingConstants.START_LEVEL;

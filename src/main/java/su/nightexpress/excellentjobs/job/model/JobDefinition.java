@@ -16,20 +16,14 @@ public class JobDefinition {
 
     private String       name;
     private List<String> description;
-    private boolean      permissionRequired;
     private NightItem    icon;
-    private List<String> joinCommands;
-    private List<String> leaveCommands;
     private int[]        menuSlots;
     private int          menuPage;
 
     JobDefinition(Builder builder) {
         this.name = builder.name;
         this.description = builder.description;
-        this.permissionRequired = builder.permissionRequired;
         this.icon = builder.icon.copy();
-        this.joinCommands = builder.joinCommands;
-        this.leaveCommands = builder.leaveCommands;
         this.menuSlots = builder.menuSlots;
         this.menuPage = builder.menuPage;
     }
@@ -46,20 +40,8 @@ public class JobDefinition {
         return description;
     }
 
-    public boolean isPermissionRequired() {
-        return permissionRequired;
-    }
-
     public NightItem getIcon() {
         return icon.copy();
-    }
-
-    public List<String> getJoinCommands() {
-        return joinCommands;
-    }
-
-    public List<String> getLeaveCommands() {
-        return leaveCommands;
     }
 
     public int[] getMenuSlots() {
@@ -74,20 +56,14 @@ public class JobDefinition {
 
         private String       name;
         private List<String> description;
-        private boolean      permissionRequired;
         private NightItem    icon;
-        private List<String> joinCommands;
-        private List<String> leaveCommands;
         private int[]        menuSlots = {};
         private int          menuPage  = 1;
 
         Builder() {
             this.name = "Unnamed";
             this.description = new ArrayList<>();
-            this.permissionRequired = false;
             this.icon = NightItem.fromType(Material.GOLDEN_HOE);
-            this.joinCommands = new ArrayList<>();
-            this.leaveCommands = new ArrayList<>();
         }
 
         public JobDefinition build() {
@@ -104,23 +80,8 @@ public class JobDefinition {
             return this;
         }
 
-        public Builder setPermissionRequired(boolean permissionRequired) {
-            this.permissionRequired = permissionRequired;
-            return this;
-        }
-
         public Builder setIcon(NightItem icon) {
             this.icon = icon;
-            return this;
-        }
-
-        public Builder setJoinCommands(List<String> joinCommands) {
-            this.joinCommands = joinCommands;
-            return this;
-        }
-
-        public Builder setLeaveCommands(List<String> leaveCommands) {
-            this.leaveCommands = leaveCommands;
             return this;
         }
 

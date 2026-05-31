@@ -27,6 +27,14 @@ public class LevelingPlaceholderProvider implements PlaceholderProvider {
 
     @Override
     public void addPlaceholders(PlaceholderRegistry registry) {
+        registry.registerRaw("total_effective_level", (player, payload) -> {
+            return NumberUtil.format(this.manager.countTotalEffectiveLevel(player));
+        });
+
+        registry.registerRaw("total_level", (player, payload) -> {
+            return NumberUtil.format(this.manager.countTotalLevel(player));
+        });
+
         registry.registerMapped("level", Job.class, (player, job) -> {
             return this.parseData(player, job, data -> NumberUtil.format(data.getLevel()));
         });

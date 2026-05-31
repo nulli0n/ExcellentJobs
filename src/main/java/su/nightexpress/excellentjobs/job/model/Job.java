@@ -17,6 +17,7 @@ public class Job implements PlaceholderResolvable {
 
     private final String        id;
     private final JobDefinition definition;
+    private final JobBehavior   behavior;
 
     private final @Nullable JobLeveling  leveling;
     private final @Nullable JobGrinding  grinding;
@@ -26,11 +27,14 @@ public class Job implements PlaceholderResolvable {
 
     public Job(String id,
                JobDefinition definition,
+               JobBehavior behavior,
                @Nullable JobLeveling leveling,
                @Nullable JobGrinding grinding,
                @Nullable JobContracts contracts) {
         this.id = id;
         this.definition = definition;
+        this.behavior = behavior;
+
         this.leveling = leveling;
         this.grinding = grinding;
         this.contracts = contracts;
@@ -73,6 +77,10 @@ public class Job implements PlaceholderResolvable {
         return definition;
     }
 
+    public JobBehavior getBehavior() {
+        return behavior;
+    }
+
     public @Nullable JobLeveling getLeveling() {
         return leveling;
     }
@@ -94,7 +102,7 @@ public class Job implements PlaceholderResolvable {
     }
 
     public boolean isPermissionRequired() {
-        return this.definition.isPermissionRequired();
+        return this.behavior.isPermissionRequired();
     }
 
     public NightItem getIcon() {
@@ -102,10 +110,10 @@ public class Job implements PlaceholderResolvable {
     }
 
     public List<String> getJoinCommands() {
-        return this.definition.getJoinCommands();
+        return this.behavior.getJoinCommands();
     }
 
     public List<String> getLeaveCommands() {
-        return this.definition.getLeaveCommands();
+        return this.behavior.getLeaveCommands();
     }
 }

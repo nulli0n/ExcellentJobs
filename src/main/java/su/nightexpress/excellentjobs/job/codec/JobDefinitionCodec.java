@@ -21,10 +21,6 @@ public class JobDefinitionCodec implements ConfigCodec<JobDefinition> {
         List<String> description = config.getOrSet(path + ".Description", ConfigCodecs.STRING_LIST, List.of());
         NightItem icon = config.getOrSet(path + ".Icon", ConfigCodecs.NIGHT_ITEM, NightItem.fromType(
             Material.GOLDEN_HOE));
-        boolean permissionRequired = config.getOrSet(path + ".Permission-Required", ConfigCodecs.BOOLEAN, false);
-
-        List<String> joinCommands = config.getOrSet(path + ".Join-Commands", ConfigCodecs.STRING_LIST, List.of());
-        List<String> leaveCommands = config.getOrSet(path + ".Leave-Commands", ConfigCodecs.STRING_LIST, List.of());
 
         int[] menuSlots = config.getOrSet(path + ".Menu-Slots", ConfigCodecs.INT_ARRAY, new int[0]);
         int menuPage = config.getOrSet(path + ".Menu-Page", ConfigCodecs.INT, 1);
@@ -33,9 +29,6 @@ public class JobDefinitionCodec implements ConfigCodec<JobDefinition> {
             .setName(name)
             .setDescription(description)
             .setIcon(icon)
-            .setPermissionRequired(permissionRequired)
-            .setJoinCommands(joinCommands)
-            .setLeaveCommands(leaveCommands)
             .setMenuSlots(menuSlots)
             .setMenuPage(menuPage)
             .build();
@@ -46,9 +39,7 @@ public class JobDefinitionCodec implements ConfigCodec<JobDefinition> {
         config.set(path + ".Name", definition.getName());
         config.set(path + ".Description", definition.getDescription());
         config.set(path + ".Icon", definition.getIcon());
-        config.set(path + ".Permission-Required", definition.isPermissionRequired());
-        config.set(path + ".Join-Commands", definition.getJoinCommands());
-        config.set(path + ".Leave-Commands", definition.getLeaveCommands());
+
         config.set(path + ".Menu-Slots", ConfigCodecs.INT_ARRAY, definition.getMenuSlots());
         config.set(path + ".Menu-Page", definition.getMenuPage());
     }

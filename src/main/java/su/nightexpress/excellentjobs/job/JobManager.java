@@ -38,6 +38,7 @@ import su.nightexpress.excellentjobs.job.listener.JobGenericListener;
 import su.nightexpress.excellentjobs.job.menu.JobOptionsMenu;
 import su.nightexpress.excellentjobs.job.menu.JobsMenu;
 import su.nightexpress.excellentjobs.job.model.Job;
+import su.nightexpress.excellentjobs.job.model.JobBehavior;
 import su.nightexpress.excellentjobs.job.model.JobContracts;
 import su.nightexpress.excellentjobs.job.model.JobDefinition;
 import su.nightexpress.excellentjobs.job.model.JobGrinding;
@@ -137,6 +138,7 @@ public class JobManager extends AbstractManager<JobsPlugin> {
         ConfigCodecs.register(JobLeveling.class, JobLeveling.CODEC);
         ConfigCodecs.register(JobContracts.class, JobContracts.CODEC);
         ConfigCodecs.register(JobDefinition.class, JobDefinition.CODEC);
+        ConfigCodecs.register(JobBehavior.class, JobBehavior.CODEC);
     }
 
     private void loadSettings() {
@@ -170,6 +172,7 @@ public class JobManager extends AbstractManager<JobsPlugin> {
                 FileConfig config = FileConfig.load(file);
 
                 config.set("Definition", job.getDefinition());
+                config.set("Behavior", job.getBehavior());
                 config.set("Grind", job.getGrinding());
                 config.set("Leveling", job.getLeveling());
                 config.set("Contract", job.getContracts());
@@ -208,9 +211,9 @@ public class JobManager extends AbstractManager<JobsPlugin> {
             config.set("Definition.Name", name);
             config.set("Definition.Description", description);
             config.set("Definition.Icon", icon);
-            config.set("Definition.Permission-Required", permissionRequired);
-            config.set("Definition.Join-Commands", joinCommands);
-            config.set("Definition.Leave-Commands", leaveCommands);
+            config.set("Behavior.Permission-Required", permissionRequired);
+            config.set("Behavior.Join-Commands", joinCommands);
+            config.set("Behavior.Leave-Commands", leaveCommands);
 
             config.set("Grind.Bar-Color", barColor);
 
@@ -230,11 +233,17 @@ public class JobManager extends AbstractManager<JobsPlugin> {
             return;
         }
 
+        JobBehavior behavior = config.get("Behavior", JobBehavior.class);
+        if (behavior == null) {
+            this.plugin.error("Could not read behavior for '%s' job.".formatted(file));
+            return;
+        }
+
         JobLeveling leveling = config.get("Leveling", JobLeveling.class);
         JobGrinding grinding = config.get("Grind", JobGrinding.class);
         JobContracts contracts = config.get("Contract", JobContracts.class);
 
-        Job job = new Job(id, definition, leveling, grinding, contracts);
+        Job job = new Job(id, definition, behavior, leveling, grinding, contracts);
 
         this.jobByIdMap.put(job.getId(), job);
 
@@ -403,17 +412,6 @@ public class JobManager extends AbstractManager<JobsPlugin> {
         return Math.max(0, limit - this.countActiveJobs(player));
     }
 
-    public int countTotalLevel(Player player) {
-        return this.getAllJobs(player).stream()
-            .mapToInt(info -> info.data().getLevel())
-            .sum();
-    }
-
-    public int countTotalEffectiveLevel(Player player) {
-        return this.getActiveJobs(player).stream()
-            .mapToInt(info -> info.data().getLevel())
-            .sum();
-    }
 
     public void showJobsMenu(Player player) {
         this.jobsMenu.show(player);

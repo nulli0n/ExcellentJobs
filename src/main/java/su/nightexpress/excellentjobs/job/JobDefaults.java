@@ -10,6 +10,7 @@ import org.jspecify.annotations.NullMarked;
 
 import su.nightexpress.excellentjobs.grind.DefaultGrindObjectives;
 import su.nightexpress.excellentjobs.job.model.Job;
+import su.nightexpress.excellentjobs.job.model.JobBehavior;
 import su.nightexpress.excellentjobs.job.model.JobContracts;
 import su.nightexpress.excellentjobs.job.model.JobDefinition;
 import su.nightexpress.excellentjobs.job.model.JobGrinding;
@@ -46,10 +47,11 @@ public class JobDefaults {
     }
 
     private static Job createJob(String id, JobDefinition definition, JobGrinding grinding) {
+        JobBehavior behavior = new JobBehavior.Builder().build();
         JobLeveling leveling = new JobLeveling(100, Set.of(REWARD_POOL_ID));
         JobContracts contracts = new JobContracts(true, Set.of(Placeholders.WILDCARD));
 
-        return new Job(id, definition, leveling, grinding, contracts);
+        return new Job(id, definition, behavior, leveling, grinding, contracts);
     }
 
     private static String createName(String g1, String g2, String name, Material icon) {

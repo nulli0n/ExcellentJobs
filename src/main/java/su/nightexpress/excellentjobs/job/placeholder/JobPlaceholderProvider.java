@@ -19,14 +19,6 @@ public class JobPlaceholderProvider implements PlaceholderProvider {
 
     @Override
     public void addPlaceholders(PlaceholderRegistry registry) {
-        registry.registerRaw("total_effective_level", (player, payload) -> {
-            return NumberUtil.format(this.manager.countTotalEffectiveLevel(player));
-        });
-
-        registry.registerRaw("total_level", (player, payload) -> {
-            return NumberUtil.format(this.manager.countTotalLevel(player));
-        });
-
         registry.registerRaw("active_jobs", (player, payload) -> {
             return String.valueOf(this.manager.countActiveJobs(player));
         });
