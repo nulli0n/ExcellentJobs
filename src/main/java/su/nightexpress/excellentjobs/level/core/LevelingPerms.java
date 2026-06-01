@@ -13,7 +13,7 @@ public class LevelingPerms {
     public static final PermissionNamespace ROOT    = Perms.ROOT.namespace("leveling");
     public static final PermissionNamespace COMMAND = ROOT.namespace("command");
 
-    public static final Permission REWARD_AUTO_CLAIM = ROOT.create("reward.auto.claim");
+    public static final Permission REWARD_AUTO_CLAIM = ROOT.create("reward.autoclaim");
 
     public static final Permission COMMAND_LEVELS = COMMAND.create("levels");
 

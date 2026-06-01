@@ -36,7 +36,7 @@ public class Zone implements PlaceholderResolvable {
     }
 
     public boolean hasPermission(Player player) {
-        if (!this.definition.isPermissionRequired()) return true;
+        if (!this.behavior.isPermissionRequired()) return true;
 
         return player.hasPermission(this.getPermission());
     }

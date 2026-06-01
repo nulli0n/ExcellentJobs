@@ -28,7 +28,6 @@ public class ZoneDefinitionCodec implements ConfigCodec<ZoneDefinition> {
         String name = config.getOrSet(path + ".Name", ConfigCodecs.STRING, "Unnamed");
         List<String> description = config.getOrSet(path + ".Description", ConfigCodecs.STRING_LIST, List.of());
         NightItem icon = config.getOrSet(path + ".Icon", ConfigCodecs.NIGHT_ITEM, new NightItem(Material.MAP));
-        boolean permissionRequired = config.getOrSet(path + ".Permission_Required", ConfigCodecs.BOOLEAN, false);
 
         return ZoneDefinition.builder()
             .setWorldName(worldName)
@@ -36,7 +35,6 @@ public class ZoneDefinitionCodec implements ConfigCodec<ZoneDefinition> {
             .setName(name)
             .setDescription(description)
             .setIcon(icon)
-            .setPermissionRequired(permissionRequired)
             .build();
     }
 
@@ -48,6 +46,5 @@ public class ZoneDefinitionCodec implements ConfigCodec<ZoneDefinition> {
         config.set(path + ".Name", definition.getName());
         config.set(path + ".Description", definition.getDescription());
         config.set(path + ".Icon", definition.getIcon());
-        config.set(path + ".Permission_Required", definition.isPermissionRequired());
     }
 }

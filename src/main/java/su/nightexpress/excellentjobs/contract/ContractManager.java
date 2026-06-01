@@ -868,6 +868,7 @@ public class ContractManager extends AbstractManager<JobsPlugin> {
     public boolean isMetContractConditions(Player player, Job job, Contract contract) {
         ContractUnlocking unlocking = contract.getUnlocking();
         if (!unlocking.isConditionsEnabled()) return true;
+        if (unlocking.getConditions().isEmpty()) return true;
 
         return unlocking.getConditions().stream().allMatch(condition -> condition.check(player, contract, job));
     }

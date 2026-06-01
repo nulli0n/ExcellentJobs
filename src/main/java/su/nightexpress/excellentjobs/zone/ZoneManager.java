@@ -374,7 +374,7 @@ public class ZoneManager extends AbstractManager<JobsPlugin> {
             .build();
 
         RequirementMode mode = RequirementMode.ANY_JOB;
-        ZoneBehavior behavior = new ZoneBehavior(false, Set.of(), mode, Map.of(), Map.of(), Map.of());
+        ZoneBehavior behavior = new ZoneBehavior(false, false, Set.of(), mode, Map.of(), Map.of(), Map.of());
 
         Zone zone = new Zone(id, definition, behavior);
 

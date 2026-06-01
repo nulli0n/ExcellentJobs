@@ -51,6 +51,7 @@ public class ActiveZone {
         ZoneBehavior behavior = this.zone.getBehavior();
         RequirementMode mode = behavior.getRequirementMode();
         Set<ZoneRequirement> requirements = behavior.getRequirements();
+        if (requirements.isEmpty()) return true;
 
         Stream<Job> stream = this.jobManager.getActiveJobs(player)
             .stream().map(JobInfo::job);

@@ -39,6 +39,8 @@ public class LevelReward implements Reward {
 
     @Override
     public boolean isAvailable(Player player, Job job) {
+        if (this.requirements.isEmpty()) return true;
+
         return this.requirements.stream().allMatch(requirement -> requirement.test(player, job));
     }
 

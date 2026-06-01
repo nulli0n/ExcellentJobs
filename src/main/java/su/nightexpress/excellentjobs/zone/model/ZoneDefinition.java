@@ -20,7 +20,6 @@ public class ZoneDefinition {
     private String       name;
     private List<String> description;
     private NightItem    icon;
-    private boolean      permissionRequired;
 
     ZoneDefinition(Builder builder) {
         this.worldName = builder.worldName;
@@ -28,7 +27,6 @@ public class ZoneDefinition {
         this.name = builder.name;
         this.description = builder.description;
         this.icon = builder.icon;
-        this.permissionRequired = builder.permissionRequired;
     }
 
     public static ZoneDefinition defaults() {
@@ -63,9 +61,6 @@ public class ZoneDefinition {
         return icon.copy();
     }
 
-    public boolean isPermissionRequired() {
-        return permissionRequired;
-    }
 
     public static Builder builder() {
         return new Builder();
@@ -73,12 +68,11 @@ public class ZoneDefinition {
 
     public static class Builder {
 
-        private String       worldName          = "world";
-        private Cuboid       cuboid             = new Cuboid(BlockPos.empty(), BlockPos.empty());
-        private String       name               = "Unnamed";
-        private List<String> description        = List.of();
-        private NightItem    icon               = NightItem.fromType(Material.GRASS_BLOCK);
-        private boolean      permissionRequired = false;
+        private String       worldName   = "world";
+        private Cuboid       cuboid      = new Cuboid(BlockPos.empty(), BlockPos.empty());
+        private String       name        = "Unnamed";
+        private List<String> description = List.of();
+        private NightItem    icon        = NightItem.fromType(Material.GRASS_BLOCK);
 
         public Builder setWorldName(String worldName) {
             this.worldName = worldName;
@@ -102,11 +96,6 @@ public class ZoneDefinition {
 
         public Builder setIcon(NightItem icon) {
             this.icon = icon;
-            return this;
-        }
-
-        public Builder setPermissionRequired(boolean permissionRequired) {
-            this.permissionRequired = permissionRequired;
             return this;
         }
 

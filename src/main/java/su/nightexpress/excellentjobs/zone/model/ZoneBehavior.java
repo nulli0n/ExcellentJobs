@@ -15,6 +15,7 @@ public class ZoneBehavior {
 
     public static final ZoneBehaviorCodec CODEC = new ZoneBehaviorCodec();
 
+    private boolean                                   permissionRequired;
     private final boolean                             pvpAllowed;
     private final Set<Material>                       disabledInteractions;
     private final RequirementMode                     requirementMode;
@@ -22,12 +23,15 @@ public class ZoneBehavior {
     private final Map<String, BlockList>              blockListMap;
     private final Map<GrindObjectiveProperty, Double> grindMultipliers;
 
-    public ZoneBehavior(boolean pvpAllowed,
+    public ZoneBehavior(
+                        boolean permissionRequired,
+                        boolean pvpAllowed,
                         Set<Material> disabledInteractions,
                         RequirementMode requirementMode,
                         Map<String, ZoneRequirement> requirementMap,
                         Map<String, BlockList> blockListMap,
                         Map<GrindObjectiveProperty, Double> grindMultipliers) {
+        this.permissionRequired = permissionRequired;
         this.pvpAllowed = pvpAllowed;
         this.disabledInteractions = disabledInteractions;
         this.requirementMode = requirementMode;
@@ -37,7 +41,7 @@ public class ZoneBehavior {
     }
 
     public static ZoneBehavior defaults() {
-        return new ZoneBehavior(false, Set.of(), RequirementMode.ANY_JOB, Map.of(), Map.of(), Map.of());
+        return new ZoneBehavior(false, false, Set.of(), RequirementMode.ANY_JOB, Map.of(), Map.of(), Map.of());
     }
 
     public boolean isDisabledInteraction(Material material) {
@@ -46,6 +50,10 @@ public class ZoneBehavior {
 
     public double getGrindMultiplier(GrindObjectiveProperty property) {
         return this.grindMultipliers.getOrDefault(property, 1D);
+    }
+
+    public boolean isPermissionRequired() {
+        return permissionRequired;
     }
 
     public boolean isPvpAllowed() {

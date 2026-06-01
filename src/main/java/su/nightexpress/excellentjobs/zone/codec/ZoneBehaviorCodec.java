@@ -24,6 +24,7 @@ public class ZoneBehaviorCodec implements ConfigCodec<ZoneBehavior> {
 
     @Override
     public ZoneBehavior read(FileConfig config, String path) throws CodecReadException {
+        boolean permissionRequired = config.getOrSet(path + ".Permission_Required", ConfigCodecs.BOOLEAN, false);
         boolean pvpAllowed = config.getOrSet(path + ".PvP-Allowed", ConfigCodecs.BOOLEAN, false);
 
         Set<Material> disabledInteractions = config.getOrSet(path + ".Disabled-Block-Interactions",
@@ -59,11 +60,12 @@ public class ZoneBehaviorCodec implements ConfigCodec<ZoneBehavior> {
             grindMultipliers.put(property, multiplier);
         }
 
-        return new ZoneBehavior(pvpAllowed, disabledInteractions, requirementMode, requirements, blockListMap, grindMultipliers);
+        return new ZoneBehavior(permissionRequired, pvpAllowed, disabledInteractions, requirementMode, requirements, blockListMap, grindMultipliers);
     }
 
     @Override
     public void write(FileConfig config, String path, ZoneBehavior value) {
+        config.set(path + ".Permission_Required", value.isPermissionRequired());
         config.set(path + ".PvP-Allowed", value.isPvpAllowed());
         config.set(path + ".Disabled-Block-Interactions", ConfigCodecs.MATERIAL_SET, value.getDisabledInteractions());
 
