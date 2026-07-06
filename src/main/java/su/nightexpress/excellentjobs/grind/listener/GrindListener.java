@@ -1,5 +1,6 @@
 package su.nightexpress.excellentjobs.grind.listener;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.bukkit.entity.Player;
@@ -36,5 +37,9 @@ public abstract class GrindListener<T> extends AbstractListener<JobsPlugin> {
 
     protected boolean checkProtection(Predicate<GrindProtection> predicate) {
         return this.protection == null || predicate.test(this.protection);
+    }
+
+    protected Optional<GrindProtection> protection() {
+        return Optional.ofNullable(this.protection);
     }
 }

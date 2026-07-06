@@ -11,6 +11,8 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.data.Ageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -36,6 +38,7 @@ import su.nightexpress.excellentjobs.job.model.Job;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.manager.AbstractManager;
 import su.nightexpress.nightcore.util.BukkitThing;
+import su.nightexpress.nightcore.util.Lists;
 import su.nightexpress.nightcore.util.PDCUtil;
 import su.nightexpress.nightcore.util.Placeholders;
 import su.nightexpress.nightcore.util.TimeUtil;
@@ -48,6 +51,12 @@ import su.nightexpress.nightcore.util.time.TimeFormats;
 public class GrindProtectionManager extends AbstractManager<JobsPlugin> implements GrindProtection {
 
     private static final String PLAYER_BLOCK_MARKER = "player_block_marker";
+
+    private static final Set<Material> GROWING_PLANTS = Lists.newSet(
+        Material.WHEAT, Material.CARROTS, Material.POTATOES,
+        Material.BEETROOTS, Material.PUMPKIN_STEM, Material.MELON_STEM,
+        Material.PITCHER_CROP, Material.NETHER_WART, Material.CHORUS_FLOWER
+    );
 
     private final GrindProtectionSettings settings;
     private final Path                    settingsFile;
@@ -225,6 +234,13 @@ public class GrindProtectionManager extends AbstractManager<JobsPlugin> implemen
     @Override
     public boolean isNaturalBlock(Block block) {
         return !this.isArtificalBlock(block);
+    }
+
+    @Override
+    public boolean isUngrowthBlock(BlockState blockState) {
+        if (!GROWING_PLANTS.contains(blockState.getType())) return false;
+
+        return blockState.getBlockData() instanceof Ageable ageable && ageable.getAge() < ageable.getMaximumAge();
     }
 
     @Override

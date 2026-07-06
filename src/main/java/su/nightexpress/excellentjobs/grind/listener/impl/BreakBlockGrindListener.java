@@ -5,8 +5,6 @@ import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.Ageable;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -35,10 +33,6 @@ public class BreakBlockGrindListener extends GrindListener<Block> {
         super(plugin, manager, protection, type);
     }
 
-    private boolean isTallBlock(Material material) {
-        return TALL_BLOCKS.contains(material);
-    }
-
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onGrindMining(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -49,18 +43,16 @@ public class BreakBlockGrindListener extends GrindListener<Block> {
     }
 
     private void giveBlockXP(Player player, @Nullable ItemStack tool, Block block) {
-        if (!this.checkProtection(p -> p.isGrindAllowed(player) && !p.isArtificalBlock(block))) return;
+        boolean ignore = this.protection().stream().anyMatch(protection -> {
+            if (!protection.isGrindAllowed(player)) return true;
 
-        BlockData blockData = block.getBlockData();
-        boolean isTall = this.isTallBlock(block.getType());
-
-        // Do not give XP for ungrowth plants.
-        if (!isTall && blockData instanceof Ageable age && age.getAge() < age.getMaximumAge()) {
-            return;
-        }
+            return protection.isArtificalBlock(block) || protection.isUngrowthBlock(block.getState());
+        });
+        if (ignore) return;
 
         this.giveXP(player, block, GrindContext.create(tool));
 
+        boolean isTall = TALL_BLOCKS.contains(block.getType());
         if (isTall) {
             Block above = block.getRelative(BlockFace.UP);
             if (above.getType() == block.getType()) {

@@ -2,6 +2,7 @@ package su.nightexpress.excellentjobs.grind.listener.impl;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -44,12 +45,18 @@ public class BlockLootGrindListener extends GrindListener<ItemStack> {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockDrop(BlockDropItemEvent event) {
-        Player player = event.getPlayer();
-        if (this.protection != null && !this.protection.isGrindAllowed(player)) return;
-        if (event.getBlockState() instanceof Container) return; // Do not handle container's drops.
+        BlockState blockState = event.getBlockState();
+        if (blockState instanceof Container) return; // Do not handle container's drops.
 
+        Player player = event.getPlayer();
         Block block = event.getBlock();
-        if (this.protection != null && this.protection.isArtificalBlock(block)) return;
+
+        boolean ignore = this.protection().stream().anyMatch(protection -> {
+            if (!protection.isGrindAllowed(player)) return true;
+
+            return protection.isArtificalBlock(block) || protection.isUngrowthBlock(blockState);
+        });
+        if (ignore) return;
 
         event.getItems().forEach(item -> {
             ItemStack itemStack = item.getItemStack();
