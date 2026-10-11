@@ -105,6 +105,10 @@ public class Job implements PlaceholderResolvable {
         return this.behavior.isPermissionRequired();
     }
 
+    public boolean isZoneOnly() {
+        return this.behavior.isZoneOnly();
+    }
+
     public NightItem getIcon() {
         return this.definition.getIcon();
     }

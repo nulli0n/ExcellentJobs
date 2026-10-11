@@ -16,12 +16,14 @@ public class JobBehaviorCodec implements ConfigCodec<JobBehavior> {
     @Override
     public JobBehavior read(FileConfig config, String path) throws CodecReadException {
         boolean permissionRequired = config.getOrSet(path + ".Permission-Required", ConfigCodecs.BOOLEAN, false);
+        boolean zoneOnly = config.getOrSet(path + ".Zone-Only", ConfigCodecs.BOOLEAN, false);
 
         List<String> joinCommands = config.getOrSet(path + ".Join-Commands", ConfigCodecs.STRING_LIST, List.of());
         List<String> leaveCommands = config.getOrSet(path + ".Leave-Commands", ConfigCodecs.STRING_LIST, List.of());
 
         return new JobBehavior.Builder()
             .setPermissionRequired(permissionRequired)
+            .setZoneOnly(zoneOnly)
             .setJoinCommands(joinCommands)
             .setLeaveCommands(leaveCommands)
             .build();
@@ -30,6 +32,7 @@ public class JobBehaviorCodec implements ConfigCodec<JobBehavior> {
     @Override
     public void write(FileConfig config, String path, JobBehavior behavior) {
         config.set(path + ".Permission-Required", behavior.isPermissionRequired());
+        config.set(path + ".Zone-Only", behavior.isZoneOnly());
         config.set(path + ".Join-Commands", behavior.getJoinCommands());
         config.set(path + ".Leave-Commands", behavior.getLeaveCommands());
     }

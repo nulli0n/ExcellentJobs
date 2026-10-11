@@ -10,17 +10,23 @@ public class JobBehavior {
     public static final JobBehaviorCodec CODEC = new JobBehaviorCodec();
 
     private boolean      permissionRequired;
+    private boolean      zoneOnly;
     private List<String> joinCommands;
     private List<String> leaveCommands;
 
     JobBehavior(Builder builder) {
         this.permissionRequired = builder.permissionRequired;
+        this.zoneOnly = builder.zoneOnly;
         this.joinCommands = builder.joinCommands;
         this.leaveCommands = builder.leaveCommands;
     }
 
     public boolean isPermissionRequired() {
         return permissionRequired;
+    }
+
+    public boolean isZoneOnly() {
+        return zoneOnly;
     }
 
     public List<String> getJoinCommands() {
@@ -34,11 +40,13 @@ public class JobBehavior {
     public static class Builder {
 
         private boolean      permissionRequired;
+        private boolean      zoneOnly;
         private List<String> joinCommands;
         private List<String> leaveCommands;
 
         public Builder() {
             this.permissionRequired = false;
+            this.zoneOnly = false;
             this.joinCommands = new ArrayList<>();
             this.leaveCommands = new ArrayList<>();
         }
@@ -49,6 +57,11 @@ public class JobBehavior {
 
         public Builder setPermissionRequired(boolean permissionRequired) {
             this.permissionRequired = permissionRequired;
+            return this;
+        }
+
+        public Builder setZoneOnly(boolean zoneOnly) {
+            this.zoneOnly = zoneOnly;
             return this;
         }
 
